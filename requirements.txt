@@ -13,6 +13,7 @@ accelerate
 safetensors
 tokenizers
 datasets
+tensorboard
 
 # --- Data Processing ---
 pandas>=2.0.0
@@ -35,6 +36,9 @@ pydantic
 
 # --- Model Explanation ---
 captum>=0.7.0
+
+# --- Dataset Download ---
+kagglehub
 
 # --- Utilities ---
 PyYAML

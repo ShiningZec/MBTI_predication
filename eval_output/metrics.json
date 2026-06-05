@@ -1,0 +1,40 @@
+{
+  "EI": {
+    "accuracy": 0.9166,
+    "precision": 0.7899,
+    "recall": 0.8877,
+    "f1": 0.8359,
+    "auc": 0.9688,
+    "mcc": 0.7827
+  },
+  "SN": {
+    "accuracy": 0.9692,
+    "precision": 0.9705,
+    "recall": 0.9966,
+    "f1": 0.9834,
+    "auc": 0.9821,
+    "mcc": 0.7897
+  },
+  "TF": {
+    "accuracy": 0.9429,
+    "precision": 0.9532,
+    "recall": 0.9595,
+    "f1": 0.9564,
+    "auc": 0.9835,
+    "mcc": 0.8737
+  },
+  "JP": {
+    "accuracy": 0.8997,
+    "precision": 0.9023,
+    "recall": 0.8531,
+    "f1": 0.877,
+    "auc": 0.9628,
+    "mcc": 0.7934
+  },
+  "exact_match": 0.8058,
+  "hamming_loss": 0.0679,
+  "mean_acc": 0.9321,
+  "mean_f1": 0.9132,
+  "mean_auc": 0.9743,
+  "macro_mcc": 0.8099
+}

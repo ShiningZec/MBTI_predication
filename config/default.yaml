@@ -1,0 +1,66 @@
+# ============================================================
+# MBTI 模型训练配置文件
+# ============================================================
+# 用法：
+#   python train.py                        # 使用此文件全部默认值
+#   python train.py --cfg config/exp1.yaml # 指定其他配置文件
+#   python train.py --epochs 10 --lr 5e-5 # CLI 参数会覆盖配置文件
+# ============================================================
+
+# ---- 模型 ----
+model:
+  name: "D:/ML/MBTI_pred/models/roberta-base"   # HuggingFace 模型名或本地路径
+  pooling: "mean"                               # cls | mean | max | attention
+  max_length: 256                               # token 截断上限 (RoBERTa 硬上限)
+  freeze_backbone: false                        # 冻结 RoBERTa 权重 (Baseline模式)
+  dropout: 0.2                                  # 分类头 Dropout
+
+# ---- 分类器 ----
+classifier:
+  head_hidden: 64                               # 各分类头隐藏层维度
+
+# ---- 训练 ----
+training:
+  num_epochs: 3                                 # 训练轮数
+  batch_size: 16                                # 批大小
+  gradient_accumulation_steps: 1                # 梯度累积步数
+  max_grad_norm: 1.0                            # 梯度裁剪
+  fp16: true                                    # 混合精度训练
+  num_workers: 4                                # DataLoader 进程数
+  seed: 42                                      # 随机种子
+  early_stopping_patience: 3                    # 早停耐心 (epoch), 0=禁用
+
+# ---- 优化器 ----
+optimizer:
+  learning_rate: 0.00002                        # Encoder 学习率 (2e-5)
+  classifier_lr: 0.0001                         # 分类头学习率 (1e-4)
+  weight_decay: 0.01                            # 权重衰减
+  warmup_ratio: 0.1                             # 预热比例
+
+# ---- 损失函数 ----
+# 四个维度的损失权重 (建议和为 1.0)
+# SN 极不均衡 (91% N), 适当提高权重
+loss:
+  dim_weights:
+    EI: 0.25
+    SN: 0.35
+    TF: 0.20
+    JP: 0.20
+  # 正样本权重, 缓解类别不均衡 (None=不使用)
+  pos_weights:
+    EI: null
+    SN: 10.0
+    TF: null
+    JP: null
+
+# ---- 数据 ----
+data:
+  train_csv: "data/train.csv"
+  test_csv: "data/test.csv"
+  label_map: "data/label_map.json"
+
+# ---- 输出 ----
+output:
+  dir: "output"                                 # 模型保存根目录
+  save_best: true                               # 是否保存最佳模型
+  log_interval: 50                              # 训练时每 N batch 打印一次

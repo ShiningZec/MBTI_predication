@@ -1,3 +1,12 @@
-data/MBTI_500.csv
+# 数据文件
 data/*.csv
 data/*.json
+data/MBTI_500.csv
+
+# 模型缓存
+models/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/

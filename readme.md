@@ -1,431 +1,407 @@
-# MBTI 性格预测系统（设计阶段）
+# MBTI 性格预测系统
 
-本项目构建一个基于自然语言处理与深度学习的 **MBTI 性格预测系统**，通过用户输入的文本内容预测其 MBTI 四维人格类型（E/I、S/N、T/F、J/P），并提供可解释的预测分析。
+基于 **RoBERTa + 四维独立分类头** 的英文文本 MBTI 人格类型预测系统。输入一段英文文本，输出 E/I、S/N、T/F、J/P 四维概率、关键词归因、注意力热力图数据、以及自然语言人格解读。
 
-项目当前处于 **设计与规划阶段**，目标是搭建从数据输入、语义表征、人格预测、结果解释到前端展示的完整端到端系统。
+
+---
+
+## 目录
+
+- [环境配置](#环境配置)
+- [项目架构](#项目架构)
+- [各模块说明](#各模块说明)
+- [训练结果](#训练结果)
+- [API 接口](#api-接口)
+- [使用指南](#使用指南)
+- [改进清单](#改进清单)
+- [附录](#附录)
 
 ---
 
 ## 环境配置
 
-### 1. 创建 Conda 环境
+### 1. Conda 环境
 
 ```bash
 conda create -n mbti_pred python=3.10 -y
 conda activate mbti_pred
 ```
 
-> Python 版本选择：3.10 生态兼容性最稳；3.11 也可用（更快）。本项目不限制。
-
-### 2. 安装 PyTorch（CUDA）
-
-根据 GPU 驱动版本选择对应的 CUDA 索引：
-
-| CUDA 版本 | 安装命令 |
-|-----------|---------|
-| CUDA 12.8 | `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128` |
-| CUDA 12.4 | `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124` |
-| CPU only  | `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
+### 2. 安装 PyTorch（CUDA 12.8）
 
 ```bash
-# 验证 CUDA
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+```
+
+验证：
+```bash
 python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"
 ```
 
-### 3. 安装其余依赖
+### 3. 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. pip 缓存配置（C 盘空间不足时）
+### 4. 下载模型权重
 
-```bash
-mkdir D:\pip_temp
-pip config set global.cache-dir D:\pip_temp
-```
+从 [hf-mirror.com/FacebookAI/roberta-base](https://hf-mirror.com/FacebookAI/roberta-base/tree/main) 下载全部文件到 `models/roberta-base/`。
 
-### 开发环境参考
+### 开发环境
 
-| 组件 | 本机配置 |
-|------|---------|
+| 组件 | 配置 |
+|------|------|
 | GPU | NVIDIA GeForce RTX 4060 Laptop (8 GB) |
 | CUDA | 13.2 (Driver 595.79) |
 | PyTorch | 2.11.0+cu128 |
 | Python | 3.10 |
-| OS | Windows 11 |
+| 模型 | roberta-base (125M) |
 
 ---
 
-## 总体架构
+## 项目架构
 
-系统采用 **五层流水线架构**，层与层之间通过明确定义的数据契约解耦，各层可独立开发、测试和替换。
-
-![pasted-image-1780583053050.webp](https://files.seeusercontent.com/2026/06/04/Xcs6/pasted-image-1780583053050.webp)
----
-
-## 1. 数据层（Data Layer）
-
-### 1.1 职责
-
-负责原始数据的加载、清洗、预处理和标准化，向下游输出高质量的结构化数据。
-
-### 1.2 数据源
-
-| 数据来源 | 格式 | 说明 |
-|----------|------|------|
-| MBTI 语料数据集 | CSV（type, posts） | 用户论坛帖子与对应 MBTI 标签 |
-| 用户实时输入 | 纯文本字符串 | 前端输入的待预测文本 |
-
-### 1.3 预处理流程
-
-```
-原始文本 → HTML 标签移除 → 特殊符号/表情清洗 → URL/提及移除
-         → 空白规范化 → 分词 → 长度截断/填充 → 输出
-```
-
-### 1.4 标签处理
-
-MBTI 16 种类型拆分为四个独立二分类标签：
-
-| MBTI 类型 | E/I | S/N | T/F | J/P |
-|-----------|-----|-----|-----|-----|
-| INFJ | 0 (I) | 1 (N) | 0 (F) | 1 (J) |
-| ENTP | 1 (E) | 1 (N) | 1 (T) | 0 (P) |
-| ... | ... | ... | ... | ... |
-
-### 1.5 模块接口
-
-```
-输入：原始 CSV 文件路径 或 用户输入文本字符串
-输出：{
-    "text": str,           // 清洗后文本
-    "tokens": List[str],   // 分词序列
-    "labels": {            // 仅训练时有
-        "EI": 0|1,
-        "SN": 0|1,
-        "TF": 0|1,
-        "JP": 0|1
-    }
-}
-```
-
----
-
-## 2. 表征层（Representation Layer）
-
-### 2.1 职责
-
-将自然语言文本转换为稠密语义向量，供下游分类器使用。这是系统的核心能力层，表征质量直接决定预测上限。
-
-### 2.2 技术选型
-
-选用 **BERT/RoBERTa-base** 作为表征模型，平衡效果与训练/推理成本。
-
-| 模型 | 向量维度 | 参数量 | 说明 |
-|------|----------|--------|------|
-| `bert-base-uncased` | 768 | 110M | 英文数据首选 |
-| `bert-base-chinese` | 768 | 110M | 中文数据 |
-| `RoBERTa-wwm-ext` | 768 | 110M | **中文推荐**，哈工大讯飞联合发布，全词掩码，中文 NLP 表现优于原生 BERT |
-
-> 本项目以中文 MBTI 文本为主要处理对象，默认使用 **`RoBERTa-wwm-ext`**。
-
-### 2.3 处理流程
-
-```
-输入文本序列
-     │
-     ▼
-Tokenizer（WordPiece / BPE）
-     │
-     ▼
-Token Embeddings + Segment Embeddings + Position Embeddings
-     │
-     ▼
-Transformer Encoder（12 层 × 12 头自注意力）
-     │
-     ▼
-Pooling Strategy（CLS Token / Mean Pooling / Max Pooling）
-     │
-     ▼
-768-dim 语义向量 → 传入任务层
-```
-
-### 2.4 Pooling 策略对比
-
-| 策略 | 做法 | 特点 |
-|------|------|------|
-| CLS Token | 取 `[CLS]` 位置的输出 | BERT 原生方式，适合分类 |
-| Mean Pooling | 所有 token 取均值 | 信息利用充分，推荐实验 |
-| Max Pooling | 每个维度取最大值 | 突出关键特征 |
-
-### 2.5 模块接口
-
-```
-输入：清洗后的文本字符串
-输出：numpy.ndarray / torch.Tensor, shape = (batch_size, 768)
-```
-
----
-
-## 3. 任务层（Task Layer）
-
-### 3.1 职责
-
-基于语义向量进行四维二分类，输出每个维度的预测概率。
-
-### 3.2 设计思路
-
-相比直接做 16 类 softmax 分类，**四维独立二分类**有以下优势：
-
-- **稳定性**：每个维度只需学习两个类别，决策边界更清晰
-- **可解释性**：可以独立分析每个维度受哪些文本特征影响
-- **样本效率**：16 分类需要更多数据覆盖所有组合，四维拆分后每个二分类器都能利用全部数据
-- **灵活性**：可以单独优化某一维度的分类器
-
-### 3.3 模型结构
-
-```text
-                 特征向量 (768-dim)
-                        |
-                  +-------------------+
-                  | Shared Dense       |  <-- 共享表示层 (Dropout)
-                  | 768 -> 256         |
-                  +-------------------+
-                        |
-        +---------------+---------------+-------------+
-        |               |               |             |
-   E/I Head        S/N Head       T/F Head       J/P Head
-   256 -> 64       256 -> 64      256 -> 64       256 -> 64
-    64 -> 1         64 -> 1        64 -> 1         64 -> 1
-        |               |               |               |
-    Sigmoid          Sigmoid         Sigmoid         Sigmoid
-        |               |               |               |
-   p(E) [0,1]      p(S) [0,1]     p(T) [0,1]     p(J) [0,1]
-```
-
-### 3.4 损失函数
-
-每个维度使用 **二元交叉熵（BCE Loss）**，总损失为四个维度的加权和：
-
-$$\mathcal{L}_{total} = \lambda_1 \mathcal{L}_{EI} + \lambda_2 \mathcal{L}_{SN} + \lambda_3 \mathcal{L}_{TF} + \lambda_4 \mathcal{L}_{JP}$$
-
-默认 $\lambda_i = 0.25$（等权），可根据各维度分类难度调整。
-
-### 3.5 评估指标
-
-| 指标 | 说明 |
-|------|------|
-| Accuracy（逐维度） | 每个二分类的准确率 |
-| Overall Accuracy | 四维全部正确才算正确 |
-| F1 Score | 每维度的精确率-召回率调和均值 |
-| AUC-ROC | 维度预测的区分能力 |
-
-### 3.6 输出映射
-
-```
-p(E) ≥ 0.5 → "E" | p(E) < 0.5 → "I"
-p(S) ≥ 0.5 → "S" | p(S) < 0.5 → "N"
-p(T) ≥ 0.5 → "T" | p(T) < 0.5 → "F"
-p(J) ≥ 0.5 → "J" | p(J) < 0.5 → "P"
-
-组合 → 如 [I, N, F, P] → "INFP"
-```
-
-### 3.7 模块接口
-
-```
-输入：语义向量 (batch_size, 768)
-输出：{
-    "probabilities": {
-        "EI": {"E": 0.32, "I": 0.68},
-        "SN": {"S": 0.21, "N": 0.79},
-        "TF": {"T": 0.45, "F": 0.55},
-        "JP": {"J": 0.38, "P": 0.62}
-    },
-    "mbti_type": "INFP",
-    "confidence": 0.73  // 四维平均置信度
-}
-```
-
----
-
-## 4. 解释层（Explanation Layer）
-
-### 4.1 职责
-
-将模型的"黑盒预测"转化为用户可理解的解释——回答"**为什么**你被预测为 INFP 而不是 INFJ？"
-
-### 4.2 解释技术
-
-| 技术 | 粒度 | 说明 | 实现路径 |
-|------|------|------|----------|
-| 注意力权重提取 | Token 级 | 取 BERT 最后层多头注意力均值，高亮关键 tokens | 从模型 forward 中导出 `attentions` |
-| Integrated Gradients | Token 级 | 计算每个 token 对各维度预测的贡献值 | Captum / Transformers Interpret |
-| 模板化 NLG | 维度级 | 基于概率值映射到人格描述文本 | 规则引擎 |
-
-### 4.3 实施方案
-
-采用 **注意力热力图 + Integrated Gradients + NLG 模板解读** 的组合方案：
-
-- **注意力热力图**：直观展示模型关注的文本区域
-- **Integrated Gradients**：精确计算每个 token 对各维度的贡献值，标注 Top-K 关键词
-- **NLG 模板解读**：将概率值和关键词贡献转化为自然语言人格描述
-
-### 4.4 输出结构
-
-```
-输入：原始文本 + 四维概率
-输出：{
-    "keywords": {
-        "EI": [{"token": "独处", "score": 0.23}, {"token": "安静", "score": 0.18}],
-        "SN": [{"token": "具体", "score": 0.31}, {"token": "实际", "score": 0.25}],
-        "TF": [{"token": "逻辑", "score": 0.28}, {"token": "分析", "score": 0.22}],
-        "JP": [{"token": "计划", "score": 0.35}, {"token": "安排", "score": 0.19}]
-    },
-    "interpretation": {
-        "EI": "你的文本显示出较高的内向倾向（I: 68%）。你更多使用与内心世界相关的词汇...",
-        "SN": "你在直觉维度上倾向明显（N: 79%）。你偏好抽象概念和未来可能性...",
-        ...
-    },
-    "summary": "综合分析，你的 MBTI 类型为 INFP（调停者）。你是一个充满理想主义的内向者..."
-}
-```
-
-### 4.5 模块接口
-
-```
-输入：原始文本 + 任务层输出（概率 + 类型）
-输出：InterpretationResult（上述 JSON 结构）
-```
-
----
-
-## 5. 应用层（Application Layer）
-
-### 5.1 职责
-
-提供推理 API 服务和用户交互界面，将预测和解释结果直观地呈现给用户。
-
-### 5.2 技术选型
-
-| 组件 | 技术 | 说明 |
-|------|------|------|
-| 推理服务框架 | FastAPI | 异步支持好，自动生成 OpenAPI 文档 |
-| 前端 | 原生 HTML/CSS/JS | 无框架依赖，单文件部署 |
-| 可视化 | ECharts / Chart.js | 雷达图 + 条形图 |
-| 模型服务 | PyTorch + Transformers | 加载训练好的 BERT + 分类头 |
-
-### 5.3 API 设计
-
-```
-POST /api/predict
-Request:
-{
-    "text": "我喜欢一个人安静地读书，思考人生的意义..."
-}
-
-Response:
-{
-    "mbti_type": "INFP",
-    "probabilities": {
-        "EI": {"E": 0.32, "I": 0.68},
-        "SN": {"S": 0.21, "N": 0.79},
-        "TF": {"T": 0.45, "F": 0.55},
-        "JP": {"J": 0.38, "P": 0.62}
-    },
-    "explanation": {
-        "keywords": { ... },
-        "interpretation": { ... },
-        "summary": "..."
-    }
-}
-```
-
-### 5.4 项目目录结构
+![系统架构图](architecture.webp)
 
 ```
 MBTI_pred/
-├── data/                    # 数据集
-│   ├── mbti_train.csv       # 训练数据
-│   ├── mbti_val.csv         # 验证数据
-│   └── mbti_test.csv        # 测试数据
+├── config/
+│   └── default.yaml              # 所有可调超参数集中配置
+├── data/
+│   ├── getdata.py                # 数据集下载脚本
+│   ├── preprocess.py             # 文本清洗 + 标签拆分 + 8:2 划分
+│   ├── dataset.py                # PyTorch Dataset 封装
+│   ├── train.csv / test.csv      # 预处理后数据 (gitignored)
+│   └── label_map.json            # 标签映射表
+├── models/
+│   └── roberta-base/             # 本地 RoBERTa 权重 (gitignored)
+├── checkpoints/
+│   └── baseline/                 # 基准模型 (max_len=256, 3epoch)
+│       ├── encoder.pt
+│       └── classifier.pt
+├── output/                       # 训练输出（每 epoch 独立目录）
+│   └── <timestamp>/
+│       ├── epoch_1/  (logs + 模型)
+│       ├── epoch_2/
+│       ├── best/                 # 最佳 epoch 模型副本
+│       └── training_info.json
 ├── src/
-│   ├── data/                # 数据层
-│   │   ├── preprocess.py    # 文本清洗与预处理
-│   │   └── dataset.py       # PyTorch Dataset 封装
-│   ├── representation/      # 表征层
-│   │   └── encoder.py       # BERT/RoBERTa 编码器
-│   ├── model/               # 任务层
-│   │   ├── classifier.py    # 四维分类头
-│   │   └── trainer.py       # 训练循环与评估
-│   ├── explanation/         # 解释层
-│   │   ├── attribution.py   # Integrated Gradients 特征归因
-│   │   ├── attention.py     # 注意力权重可视化数据
-│   │   └── interpreter.py   # 模板化 NLG 解读生成
-│   └── app/                 # 应用层
-│       ├── api.py           # FastAPI 服务
-│       └── static/
-│           └── index.html   # 前端页面
-├── experiments/             # 实验记录
-│   └── configs/             # 训练配置 YAML
-├── models/                  # 保存的模型权重
-├── requirements.txt
+│   ├── data/                     # 数据层
+│   │   ├── dataset.py            # MBTIDataset + create_dataloaders
+│   ├── representation/           # 表征层
+│   │   ├── encoder.py            # RoBERTaEncoder + 4 种 Pooling 策略
+│   │   └── doc.md                # 架构文档
+│   ├── model/                    # 任务层
+│   │   ├── classifier.py         # MBTIClassifier（logits 输出 + FP16 安全）
+│   │   └── trainer.py            # MBTITrainer（训练 + 评估 + 早停）
+│   ├── explanation/              # 解释层
+│   │   ├── attribution.py        # Integrated Gradients 归因
+│   │   ├── attention.py          # 注意力权重提取
+│   │   └── interpreter.py        # 中/英 NLG 模板解读
+│   └── app/                      # 应用层
+│       └── api.py                # FastAPI 推理服务
+├── train.py                      # 训练入口
+├── eval.py                       # 评估入口
+├── explain.py                    # 解释管线（输出 JSON 供前端）
+├── api_server.py                 # API 启动入口
 └── readme.md
 ```
 
 ---
 
-## 6. 技术方案总览
+## 各模块说明
 
-### 6.1 整体技术栈
+### 数据层 (`src/data/`)
 
-| 层级 | 技术 | 说明 |
+| 脚本 | 功能 | 用法 |
 |------|------|------|
-| 数据层 | Python + Pandas | 文本清洗、标签处理、数据集划分 |
-| 表征层 | `RoBERTa-wwm-ext` | 768 维语义向量，HuggingFace Transformers |
-| 任务层 | PyTorch + Shared FC + 4 Heads | 四维独立二分类，BCE 联合损失 |
-| 解释层 | Integrated Gradients + 注意力权重 | Captum / Transformers Interpret |
-| 推理服务 | FastAPI | 异步推理，RESTful API |
-| 前端 | HTML/CSS/JS + ECharts | 雷达图 + 条形图可视化 |
+| `data/preprocess.py` | 文本清洗 → 标签拆分(16类→4维) → 8:2分层采样 | `python data/preprocess.py` |
+| `src/data/dataset.py` | PyTorch Dataset，在线 tokenize，返回 `input_ids / attention_mask / labels` | `MBTIDataset("data/train.csv", tokenizer)` |
 
-### 6.2 对比参考
+### 表征层 (`src/representation/`)
 
-以下方案作为实验对比参考，验证主方案效果提升：
+```
+RoBERTaEncoder
+├── AutoTokenizer (Byte-level BPE)
+├── AutoModel (12层 × 12头 Transformer)
+└── Pooling: cls | mean [默认] | max | attention
+```
 
-| 维度 | Baseline（对照） | 主方案（采用） | 进阶探索 |
-|------|-----------------|----------------|----------|
-| 文本表征 | TF-IDF + SVD | BERT/RoBERTa-base | RoBERTa-large |
-| 分类模型 | 逻辑回归 × 4 | Shared FC + 4 Heads | LoRA 微调 |
-| 解释方法 | 词频统计 | IG + 注意力 | SHAP + LLM |
-| 预测精度（预期） | 60~65% | 72~78% | 78~85% |
-| 训练时间 | 分钟级 | 小时级（GPU） | 天级（GPU） |
+| 特性 | 说明 |
+|------|------|
+| 模型 | `roberta-base` (125M, 768维) |
+| 默认 Pooling | Mean — 信息利用充分，长度鲁棒 |
+| 冻结选项 | `freeze_backbone=True` → 静态特征提取（Baseline） |
+| 本地缓存 | 权重缓存至 `models/`，不依赖网络 |
+
+### 任务层 (`src/model/`)
+
+```
+特征向量 (768-dim)
+    │
+    ├── EI Head   (768 → 64 → 1 logit)
+    ├── SN Head   (768 → 64 → 1 logit)
+    ├── TF Head   (768 → 64 → 1 logit)
+    └── JP Head   (768 → 64 → 1 logit)
+```
+
+| 特性 | 说明 |
+|------|------|
+| 架构 | **无共享层**，四路独立，每个 head 仅 112K 参数 |
+| 损失函数 | 加权 BCEWithLogitsLoss，支持 `pos_weight` 缓解不均衡 |
+| FP16 | 原生兼容混合精度训练 |
+| 按 epoch 调度 | CosineAnnealingLR epoch 级衰减，避免 LR 过早见底 |
+
+### 解释层 (`src/explanation/`)
+
+| 模块 | 技术 | 输出 |
+|------|------|------|
+| `AttributionAnalyzer` | Integrated Gradients (Captum) | 四维 token 贡献分数 |
+| `AttentionExtractor` | 12层 × 12头注意力权重 | 热力图矩阵 + `<s>` token 关注分布 |
+| `MBTIInterpreter` | 规则模板引擎 | 中/英文人格描述文本 |
+
+### 应用层 (`src/app/`)
+
+| 文件 | 功能 |
+|------|------|
+| `src/app/api.py` | FastAPI 服务，启动加载模型，`POST /api/predict` |
+| `api_server.py` | 一键启动：`python api_server.py` |
 
 ---
 
-## 7. 开发路线图
+## 训练结果
 
-| 阶段 | 内容 | 预计产出 |
-|------|------|----------|
-| **Phase 1：数据准备** | 数据清洗、EDA、标签拆分、数据集划分 | 结构化训练/验证/测试集 |
-| **Phase 2：Baseline 建立** | TF-IDF + 逻辑回归基线模型 | 基线指标（预测精度 60~65%） |
-| **Phase 3：主模型训练** | RoBERTa-wwm-ext 表征 + 四分类头训练与调优 | 主模型（目标精度 72~78%） |
-| **Phase 4：解释层开发** | Integrated Gradients 归因 + 注意力可视化 + NLG 解读 | 可解释的预测输出 |
-| **Phase 5：服务化与前端** | FastAPI 推理 API + HTML 前端 + ECharts 可视化 | 可交互的 Web Demo |
-| **Phase 6：对比实验（可选）** | 主方案 vs Baseline A/B 对比，撰写实验报告 | 论文/报告素材 |
+RTX 4060 Laptop (8GB)，`max_length=256`，`batch_size=16`，3 epochs。
+
+### 测试集指标
+
+| 维度 | Acc | Prec | Rec | F1 | AUC | MCC |
+|------|-----|------|-----|-----|-----|-----|
+| **EI** | 91.7% | 79.0% | 88.8% | 83.6% | 96.9% | 0.783 |
+| **SN** | 96.9% | 97.1% | 99.7% | 98.3% | 98.2% | 0.790 |
+| **TF** | 94.3% | 95.3% | 96.0% | 95.6% | 98.4% | 0.874 |
+| **JP** | 90.0% | 90.2% | 85.3% | 87.7% | 96.3% | 0.793 |
+| **Mean** | **93.2%** | — | — | **91.3%** | **97.4%** | **0.810** |
+
+| 整体指标 | 值 |
+|----------|-----|
+| Exact Match（四维全对） | 80.6% |
+| Hamming Loss | 6.8% |
+| Macro MCC | 0.810 |
+
+### 可视化评估
+
+`python eval.py` 生成 4 张分析图 → `eval_output/`：
+
+| 图 | 说明 |
+|------|------|
+| `confusion_matrices.png` | 四维 2×2 混淆矩阵 |
+| `roc_curves.png` | 四维 ROC 曲线，AUC 均 > 0.96 |
+| `confidence_dist.png` | 置信度分布：正确 vs 错误 |
+| `radar.png` | 四维 Accuracy/F1/AUC 雷达图 |
 
 ---
 
-## 附录 A：MBTI 维度说明
+## API 接口
+
+### 启动服务
+
+```bash
+# 默认 0.0.0.0:8000
+python api_server.py
+
+# 自定义端口
+python api_server.py --port 3000
+```
+
+### 接口列表
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `GET` | `/health` | 健康检查 |
+| `POST` | `/api/predict` | 预测 + 解释 |
+
+### POST /api/predict
+
+**Request**
+
+```json
+{
+  "text": "I enjoy spending quiet evenings alone with a book..."
+}
+```
+
+**Response**
+
+```json
+{
+  "prediction": {
+    "mbti_type": "ISFJ",
+    "probabilities": {
+      "EI": { "positive": 0.09, "negative": 0.91 },
+      "SN": { "positive": 0.98, "negative": 0.02 },
+      "TF": { "positive": 0.35, "negative": 0.65 },
+      "JP": { "positive": 0.58, "negative": 0.42 }
+    },
+    "confidence": 0.56
+  },
+  "keywords": {
+    "EI": [{"token": "alone", "score": 0.02}, ...],
+    "SN": [...], "TF": [...], "JP": [...]
+  },
+  "interpretation": {
+    "EI": "你在内向维度上倾向明显（I: 91%）...",
+    "SN": "你在感觉维度上倾向明显（S: 98%）...",
+    "TF": "你在情感维度上倾向明显（F: 65%）...",
+    "JP": "你在判断维度上倾向明显（J: 58%）...",
+    "summary": "你是一个 ISFJ（守卫者）—— 温暖、细致的守护者..."
+  }
+}
+```
+
+### 前端调用示例
+
+```javascript
+const res = await fetch("http://localhost:8000/api/predict", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: userInput }),
+});
+const data = await res.json();
+// data.prediction.mbti_type    → "ISFJ"
+// data.prediction.confidence   → 0.56
+// data.interpretation.summary  → "你是一个 ISFJ..."
+// data.keywords.EI             → 关键词 + 贡献分数
+```
+
+### 模型加载策略
+
+模型在 FastAPI **启动时加载一次**到 GPU 显存，所有请求复用同一份权重，无冷启动延迟，并发安全（模型只读推理）。
+
+---
+
+## 使用指南
+
+### 数据处理
+
+```bash
+# 下载数据集
+python data/getdata.py
+
+# 预处理（清洗 + 标签拆分 + 8:2 划分）
+python data/preprocess.py
+```
+
+### 训练
+
+```bash
+# 使用默认配置
+python -u train.py
+
+# 指定配置或覆盖参数
+python -u train.py --cfg config/default.yaml --epochs 5 --bs 8
+```
+
+配置文件 `config/default.yaml` 包含所有可调超参：模型路径、pooling 策略、学习率、损失权重、早停等。
+
+### 评估
+
+```bash
+# 自动找最新 checkpoint
+python eval.py
+
+# 指定 checkpoint + 错误分析
+python eval.py --ckpt output/20260605_135902/best --error-analysis
+```
+
+### 解释输出
+
+```bash
+# 生成 JSON 解释数据
+python explain.py "I enjoy quiet evenings..." --lang zh
+
+# 从文件读入
+python explain.py --file input.txt --lang en
+```
+
+---
+
+## 改进清单
+
+### 相比原始设计的主要优化
+
+| 方面 | 原设计 | 实际实现 | 原因 |
+|------|--------|---------|------|
+| **模型** | RoBERTa-wwm-ext (中文) | roberta-base (英文) | 数据集为英文论坛帖子 |
+| **架构** | 共享层 768→256 + 4 Heads | 直接 4 Heads (768→64→1) | 减少参数，简化梯度流 |
+| **输出** | Sigmoid → BCE | Logits → BCEWithLogitsLoss | FP16 混合精度安全 |
+| **调度器** | WarmRestarts (step 级) | Cosine LR (epoch 级) | LR 不会过早衰减 |
+| **配置** | CLI 参数散落 | `config/default.yaml` 集中管理 | 可读性、可复现 |
+| **输出目录** | 全局单一 | 每 epoch 独立目录 | 每轮可追溯、可对比 |
+| **不均衡** | 无 | `pos_weight` + `dim_weights` | SN 91% 严重不均衡 |
+| **解释层** | 计划中 | 完整实现 | Attribution + Attention + NLG |
+
+### 训练技巧
+
+- **分层学习率**：encoder `2e-5`，classifier `1e-4`（头部适应快于骨干）
+- **不均衡处理**：SN 维度 pos_weight=10，dim_weight=0.35 重点优化
+- **梯度裁剪**：`max_grad_norm=1.0` 防止 RoBERTa 梯度爆炸
+- **按 epoch 调度 LR**：CosineAnnealingLR，每 epoch 衰减一次
+
+---
+
+## 项目进度
+
+### 已完成 ✅
+
+| 模块 | 内容 | 状态 |
+|------|------|------|
+| 数据层 | 文本清洗、标签拆分(16类→4维)、8:2 分层采样、PyTorch Dataset | ✅ |
+| 表征层 | RoBERTa-base 本地加载、4 种 Pooling 策略（默认 Mean） | ✅ |
+| 任务层 | 四维独立分类头（logits 输出 + FP16 安全）、加权 BCEWithLogitsLoss | ✅ |
+| 训练器 | 分层 LR、epoch 级 Cosine 调度、早停、每 epoch 独立目录存储 | ✅ |
+| 配置系统 | `config/default.yaml` 集中管理所有超参，CLI 可覆盖 | ✅ |
+| 评估系统 | 6 项指标 + 4 张可视化图（混淆矩阵/ROC/置信度/雷达图） | ✅ |
+| 解释层 | Integrated Gradients 归因 + 注意力提取 + 中/英 NLG 解读 | ✅ |
+| API 服务 | FastAPI 启动加载模型、`POST /api/predict` 完整响应 | ✅ |
+| CLI 脚本 | train / eval / explain / api_server 四个入口 | ✅ |
+
+### 测试集最终指标
+
+| 指标 | 值 |
+|------|-----|
+| Mean Accuracy | **93.2%** |
+| Mean F1 | **91.3%** |
+| Mean AUC | **97.4%** |
+| Exact Match | **80.6%** |
+| Macro MCC | **0.810** |
+
+### 尚未完成 📋
+
+| 事项 | 说明 | 优先级 |
+|------|------|--------|
+| **超参数调优** | `max_length`(128/256/512)、`batch_size`(8/16/32)、`dropout`(0.1/0.2/0.3)、`learning_rate`(1e-5/2e-5/5e-5)、`head_hidden`(32/64/128)、Pooling 策略(cls/mean/max) 的网格搜索或 Optuna 自动化调优 | 🔴 高 |
+| **max_length=512 重训** | 当前模型训练用 256，eval 用 512 已大幅提升；用 512 重新训练预期进一步提 3-5% | 🔴 高 |
+| **epoch 增加** | 当前仅 3 epoch，Test Loss 尚在下降，5-8 epoch 可能进一步提升 | 🟡 中 |
+| **LoRA 微调** | 低秩适配，减少训练参数，加快训练速度 | 🟢 低 |
+| **前端页面** | 用户输入 + 结果可视化 + 解读展示 | 🟢 低 |
+| **AB 对比实验** | TF-IDF+LR baseline vs RoBERTa-base vs RoBERTa-large 系统对比 | 🟢 低 |
+
+---
+
+## 附录
+
+### A：MBTI 四维说明
 
 | 维度 | 字母 | 含义 |
 |------|------|------|
-| **E / I** | Extraversion / Introversion | 外向（关注外部世界） / 内向（关注内心世界） |
-| **S / N** | Sensing / Intuition | 感觉（关注具体事实） / 直觉（关注抽象模式） |
-| **T / F** | Thinking / Feeling | 思考（逻辑决策） / 情感（价值观决策） |
-| **J / P** | Judging / Perceiving | 判断（计划有序） / 感知（灵活开放） |
+| E / I | Extraversion / Introversion | 外向 / 内向 |
+| S / N | Sensing / Intuition | 感觉（具体） / 直觉（抽象） |
+| T / F | Thinking / Feeling | 思考（逻辑） / 情感（价值观） |
+| J / P | Judging / Perceiving | 判断（计划） / 感知（灵活） |
 
-## 附录 B：16 种 MBTI 类型速查
+### B：16 种类型速查
 
 | 类型 | 别称 | 类型 | 别称 |
 |------|------|------|------|

@@ -1,0 +1,283 @@
+{
+  "prediction": {
+    "mbti_type": "ISFP",
+    "probabilities": {
+      "EI": {
+        "positive": 0.1003,
+        "negative": 0.8997
+      },
+      "SN": {
+        "positive": 0.9891,
+        "negative": 0.0109
+      },
+      "TF": {
+        "positive": 0.2294,
+        "negative": 0.7706
+      },
+      "JP": {
+        "positive": 0.4101,
+        "negative": 0.5899
+      }
+    },
+    "confidence": 0.6246
+  },
+  "keywords": {
+    "EI": [
+      {
+        "token": "Ġexhaust",
+        "score": 0.0008
+      },
+      {
+        "token": "ĠParties",
+        "score": -0.0003
+      },
+      {
+        "token": "Ġa",
+        "score": 0.0002
+      },
+      {
+        "token": ".",
+        "score": -0.0002
+      },
+      {
+        "token": "Ġlove",
+        "score": -0.0001
+      },
+      {
+        "token": "Ġevenings",
+        "score": -0.0001
+      },
+      {
+        "token": "Ġwith",
+        "score": 0.0001
+      },
+      {
+        "token": ".",
+        "score": -0.0001
+      },
+      {
+        "token": "Ġme",
+        "score": -0.0001
+      },
+      {
+        "token": "I",
+        "score": -0.0
+      }
+    ],
+    "SN": [
+      {
+        "token": "ĠParties",
+        "score": -0.0005
+      },
+      {
+        "token": "Ġme",
+        "score": -0.0004
+      },
+      {
+        "token": "I",
+        "score": -0.0003
+      },
+      {
+        "token": "Ġexhaust",
+        "score": 0.0003
+      },
+      {
+        "token": "Ġwith",
+        "score": -0.0002
+      },
+      {
+        "token": "Ġbook",
+        "score": -0.0002
+      },
+      {
+        "token": ".",
+        "score": -0.0002
+      },
+      {
+        "token": "Ġlove",
+        "score": -0.0001
+      },
+      {
+        "token": "Ġquiet",
+        "score": -0.0001
+      },
+      {
+        "token": "Ġevenings",
+        "score": 0.0001
+      }
+    ],
+    "TF": [
+      {
+        "token": "Ġexhaust",
+        "score": 0.0018
+      },
+      {
+        "token": "ĠParties",
+        "score": -0.0017
+      },
+      {
+        "token": "Ġlove",
+        "score": -0.001
+      },
+      {
+        "token": ".",
+        "score": -0.001
+      },
+      {
+        "token": "Ġbook",
+        "score": -0.0008
+      },
+      {
+        "token": "Ġevenings",
+        "score": -0.0007
+      },
+      {
+        "token": "Ġme",
+        "score": -0.0006
+      },
+      {
+        "token": "Ġa",
+        "score": -0.0005
+      },
+      {
+        "token": "Ġwith",
+        "score": -0.0003
+      },
+      {
+        "token": ".",
+        "score": -0.0003
+      }
+    ],
+    "JP": [
+      {
+        "token": "ĠParties",
+        "score": -0.0008
+      },
+      {
+        "token": "Ġlove",
+        "score": -0.0003
+      },
+      {
+        "token": "Ġbook",
+        "score": -0.0002
+      },
+      {
+        "token": "Ġexhaust",
+        "score": 0.0002
+      },
+      {
+        "token": ".",
+        "score": -0.0002
+      },
+      {
+        "token": "I",
+        "score": 0.0001
+      },
+      {
+        "token": "Ġevenings",
+        "score": 0.0001
+      },
+      {
+        "token": "Ġwith",
+        "score": -0.0001
+      },
+      {
+        "token": ".",
+        "score": 0.0001
+      },
+      {
+        "token": "Ġquiet",
+        "score": -0.0
+      }
+    ]
+  },
+  "attribution": {
+    "EI": [
+      0.0,
+      -4.174094647169113e-05,
+      -0.00011413900938350707,
+      -2.2514104784931988e-06,
+      -7.088262645993382e-05,
+      8.467589213978499e-05,
+      0.00021138053853064775,
+      -3.637758345576003e-05,
+      -7.815482967998832e-05,
+      -0.00025581096997484565,
+      0.0008071812335401773,
+      -9.864917228696868e-05,
+      -0.00015963608166202903,
+      0.0
+    ],
+    "SN": [
+      0.0,
+      -0.00033964746398851275,
+      -0.0001222913124365732,
+      -0.00013265287270769477,
+      5.930385668762028e-05,
+      -0.00016521434008609504,
+      -0.00012329992023296654,
+      -0.00016962990048341453,
+      -0.00018548738444224,
+      -0.0004985106061212718,
+      0.0002728991094045341,
+      -0.0004098935460206121,
+      6.298464722931385e-05,
+      0.0
+    ],
+    "TF": [
+      0.0,
+      -7.897283649072051e-05,
+      -0.0010482193902134895,
+      -3.1308380130212754e-05,
+      -0.000670695211738348,
+      -0.00026296026771888137,
+      -0.00047621969133615494,
+      -0.0008000658708624542,
+      -0.0002547180629335344,
+      -0.0016827033832669258,
+      0.0017830420983955264,
+      -0.0005872509791515768,
+      -0.0010384010383859277,
+      0.0
+    ],
+    "JP": [
+      0.0,
+      0.0001041584910126403,
+      -0.00026596852694638073,
+      -3.4553253499325365e-05,
+      5.8150646509602666e-05,
+      -9.353114728583023e-05,
+      -1.9695669834618457e-05,
+      -0.0001601193507667631,
+      9.377289097756147e-05,
+      -0.000756095047108829,
+      0.00015050276124384254,
+      -3.1274277716875076e-05,
+      -0.00017769739497452974,
+      0.0
+    ]
+  },
+  "tokens": [
+    "<s>",
+    "I",
+    "Ġlove",
+    "Ġquiet",
+    "Ġevenings",
+    "Ġwith",
+    "Ġa",
+    "Ġbook",
+    ".",
+    "ĠParties",
+    "Ġexhaust",
+    "Ġme",
+    ".",
+    "</s>"
+  ],
+  "interpretation": {
+    "EI": "You show a clear preference for Introversion (I: 90%). Your writing reflects an inward focus — you value solitude, deep reflection, and recharge through quiet introspection.",
+    "SN": "You show a clear preference for Sensing (S: 99%). You focus on concrete facts and practical details, preferring verifiable information and hands-on experience.",
+    "TF": "You show a clear preference for Feeling (F: 77%). You make decisions based on values and interpersonal harmony, considering how choices affect the people involved.",
+    "JP": "You show a clear preference for Perceiving (P: 59%). You prefer a flexible, open-ended approach to life, keeping options available and adapting easily to change.",
+    "summary": "You are an ISFP (Adventurer) — a gentle, sensitive artist who explores the world through a unique aesthetic lens, expressing yourself through creation."
+  }
+}
