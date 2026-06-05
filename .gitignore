@@ -10,3 +10,6 @@ models/
 __pycache__/
 *.py[cod]
 *.egg-info/
+
+# 训练输出
+output/
