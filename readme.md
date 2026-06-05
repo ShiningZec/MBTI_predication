@@ -6,6 +6,57 @@
 
 ---
 
+## 环境配置
+
+### 1. 创建 Conda 环境
+
+```bash
+conda create -n mbti_pred python=3.10 -y
+conda activate mbti_pred
+```
+
+> Python 版本选择：3.10 生态兼容性最稳；3.11 也可用（更快）。本项目不限制。
+
+### 2. 安装 PyTorch（CUDA）
+
+根据 GPU 驱动版本选择对应的 CUDA 索引：
+
+| CUDA 版本 | 安装命令 |
+|-----------|---------|
+| CUDA 12.8 | `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128` |
+| CUDA 12.4 | `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124` |
+| CPU only  | `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
+
+```bash
+# 验证 CUDA
+python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"
+```
+
+### 3. 安装其余依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. pip 缓存配置（C 盘空间不足时）
+
+```bash
+mkdir D:\pip_temp
+pip config set global.cache-dir D:\pip_temp
+```
+
+### 开发环境参考
+
+| 组件 | 本机配置 |
+|------|---------|
+| GPU | NVIDIA GeForce RTX 4060 Laptop (8 GB) |
+| CUDA | 13.2 (Driver 595.79) |
+| PyTorch | 2.11.0+cu128 |
+| Python | 3.10 |
+| OS | Windows 11 |
+
+---
+
 ## 总体架构
 
 系统采用 **五层流水线架构**，层与层之间通过明确定义的数据契约解耦，各层可独立开发、测试和替换。

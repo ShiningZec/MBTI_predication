@@ -1,1 +1,3 @@
 data/MBTI_500.csv
+data/*.csv
+data/*.json
