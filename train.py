@@ -53,7 +53,7 @@ def merge_cli_args(cfg: dict, args: argparse.Namespace) -> dict:
         for key in keys:
             cli_attr = cli_map.get(key, key)
             val = getattr(args, cli_attr, None)
-            if val is not None and val != parser.get_default(cli_attr):
+            if val is not None:
                 cfg[section][key] = val
 
     return cfg

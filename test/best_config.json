@@ -1,0 +1,15 @@
+{
+  "best_mean_acc": 0.9384,
+  "best_params": {
+    "dropout": 0.10617534828874074,
+    "encoder_lr": 2.842539893932712e-05,
+    "classifier_lr": 0.00022219602542548883,
+    "weight_decay": 7.068974950624607e-06,
+    "warmup_ratio": 0.02727374508106509
+  },
+  "phase1_best_discrete": {
+    "pooling": "cls",
+    "head_hidden": 512
+  },
+  "phase1_value": 0.9315
+}

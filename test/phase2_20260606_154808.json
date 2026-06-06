@@ -1,0 +1,74 @@
+{
+  "timestamp": "20260606_154808",
+  "phase": "phase2",
+  "trial": 1,
+  "params": {
+    "model_name": "D:/proj/MBTI_pred/models/roberta-base",
+    "max_length": 512,
+    "batch_size": 128,
+    "pooling": "cls",
+    "num_epochs": 5,
+    "fp16": true,
+    "num_workers": 0,
+    "freeze_layers": 0,
+    "seed": 42,
+    "dim_weights": {
+      "EI": 0.25,
+      "SN": 0.35,
+      "TF": 0.2,
+      "JP": 0.2
+    },
+    "pos_weights": {
+      "SN": 10.0
+    },
+    "train_csv": "data/train.csv",
+    "test_csv": "data/test.csv",
+    "dropout": 0.21236203565420878,
+    "encoder_lr": 2.7464363002855083e-05,
+    "classifier_lr": 0.00018559745019538265,
+    "weight_decay": 0.0002481040974867811,
+    "warmup_ratio": 0.023402796066365476,
+    "head_hidden": 512
+  },
+  "metrics": {
+    "EI": {
+      "accuracy": 0.9265,
+      "precision": 0.8502,
+      "recall": 0.8402,
+      "f1": 0.8452,
+      "auc": 0.9695,
+      "mcc": 0.797
+    },
+    "SN": {
+      "accuracy": 0.9719,
+      "precision": 0.9783,
+      "recall": 0.9912,
+      "f1": 0.9847,
+      "auc": 0.9826,
+      "mcc": 0.8148
+    },
+    "TF": {
+      "accuracy": 0.9448,
+      "precision": 0.9678,
+      "recall": 0.9465,
+      "f1": 0.957,
+      "auc": 0.9855,
+      "mcc": 0.8801
+    },
+    "JP": {
+      "accuracy": 0.9044,
+      "precision": 0.8942,
+      "recall": 0.8752,
+      "f1": 0.8846,
+      "auc": 0.9656,
+      "mcc": 0.8031
+    },
+    "exact_match": 0.8236,
+    "hamming_loss": 0.0631,
+    "mean_acc": 0.9369,
+    "mean_f1": 0.9179,
+    "mean_auc": 0.9758,
+    "macro_mcc": 0.8238
+  },
+  "avg_loss": 0.0
+}

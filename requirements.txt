@@ -40,6 +40,9 @@ captum>=0.7.0
 # --- Dataset Download ---
 kagglehub
 
+# --- Hyperparameter Optimization ---
+optuna>=4.0.0
+
 # --- Utilities ---
 PyYAML
 requests

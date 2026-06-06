@@ -10,32 +10,32 @@
 # ---- 模型 ----
 model:
   name: "D:/ML/MBTI_pred/models/roberta-base"   # HuggingFace 模型名或本地路径
-  pooling: "mean"                               # cls | mean | max | attention
-  max_length: 256                               # token 截断上限 (RoBERTa 硬上限)
-  freeze_backbone: false                        # 冻结 RoBERTa 权重 (Baseline模式)
-  dropout: 0.2                                  # 分类头 Dropout
+  pooling: "cls"                                # HP搜索最优: cls > mean
+  max_length: 512                               # HP搜索固定
+  freeze_backbone: false
+  dropout: 0.11                                 # HP搜索最优 0.106
 
 # ---- 分类器 ----
 classifier:
-  head_hidden: 64                               # 各分类头隐藏层维度
+  head_hidden: 512                              # HP搜索最优: 512 > 256 > 128 > 64
 
 # ---- 训练 ----
 training:
-  num_epochs: 3                                 # 训练轮数
-  batch_size: 16                                # 批大小
-  gradient_accumulation_steps: 1                # 梯度累积步数
-  max_grad_norm: 1.0                            # 梯度裁剪
-  fp16: true                                    # 混合精度训练
-  num_workers: 4                                # DataLoader 进程数
-  seed: 42                                      # 随机种子
-  early_stopping_patience: 3                    # 早停耐心 (epoch), 0=禁用
+  num_epochs: 10                                # 最终训练
+  batch_size: 128
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  fp16: true
+  num_workers: 8
+  seed: 42
+  early_stopping_patience: 3
 
 # ---- 优化器 ----
 optimizer:
-  learning_rate: 0.00002                        # Encoder 学习率 (2e-5)
-  classifier_lr: 0.0001                         # 分类头学习率 (1e-4)
-  weight_decay: 0.01                            # 权重衰减
-  warmup_ratio: 0.1                             # 预热比例
+  learning_rate: 0.0000284                      # HP搜索最优 2.84e-5
+  classifier_lr: 0.000222                       # HP搜索最优 2.22e-4
+  weight_decay: 0.00000707                      # HP搜索最优 7.07e-6
+  warmup_ratio: 0.027                           # HP搜索最优
 
 # ---- 损失函数 ----
 # 四个维度的损失权重 (建议和为 1.0)
