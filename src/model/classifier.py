@@ -175,8 +175,11 @@ class JointBCELoss(nn.Module):
         for i, dim in enumerate(["EI", "SN", "TF", "JP"]):
             pos_w = self.pos_weights.get(dim, None)
             w = torch.tensor(pos_w, device=labels.device) if pos_w else None
+            # FP16 下强制 loss 用 FP32 计算，避免溢出
+            logit = probs[dim].float()
+            label = labels[:, i].float()
             loss = F.binary_cross_entropy_with_logits(
-                probs[dim], labels[:, i], pos_weight=w,
+                logit, label, pos_weight=w,
             )
             total += self.dim_weights[dim] * loss
             per_dim[dim] = loss.item()

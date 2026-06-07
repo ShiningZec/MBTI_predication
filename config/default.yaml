@@ -13,7 +13,7 @@ model:
   pooling: "cls"                                # HP搜索最优: cls > mean
   max_length: 512                               # HP搜索固定
   freeze_backbone: false
-  dropout: 0.11                                 # HP搜索最优 0.106
+  dropout: 0.2                                  # HP偏低，全量数据防过拟合
 
 # ---- 分类器 ----
 classifier:
@@ -22,7 +22,7 @@ classifier:
 # ---- 训练 ----
 training:
   num_epochs: 10                                # 最终训练
-  batch_size: 128
+  batch_size: 32
   gradient_accumulation_steps: 1
   max_grad_norm: 1.0
   fp16: true
@@ -32,9 +32,9 @@ training:
 
 # ---- 优化器 ----
 optimizer:
-  learning_rate: 0.0000284                      # HP搜索最优 2.84e-5
-  classifier_lr: 0.000222                       # HP搜索最优 2.22e-4
-  weight_decay: 0.00000707                      # HP搜索最优 7.07e-6
+  learning_rate: 0.0000284                      # Encoder (HP最优，保持)
+  classifier_lr: 0.0001                         # 分类头 (HP偏高，回退到安全值)
+  weight_decay: 0.01                            # HP偏低，全量数据防过拟合
   warmup_ratio: 0.027                           # HP搜索最优
 
 # ---- 损失函数 ----

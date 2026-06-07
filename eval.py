@@ -253,10 +253,16 @@ def load_model(ckpt_path, device):
     pooling = info.get("pooling", "mean")
     max_len = info.get("config", {}).get("max_length", 512)
     hidden = info.get("hidden_size", 768)
+    head_hidden = info.get("head_hidden")
+
+    # 从 checkpoint 自动推断 head_hidden（如果 training_info 没有）
+    if head_hidden is None:
+        sd = torch.load(ckpt / "classifier.pt", map_location="cpu", weights_only=True)
+        head_hidden = sd["heads.EI.fc1.weight"].shape[0]
 
     encoder = RoBERTaEncoder(model_name=model_name, pooling=pooling, max_length=max_len)
     encoder.load_state_dict(torch.load(ckpt / "encoder.pt", map_location=device, weights_only=True))
-    classifier = MBTIClassifier(input_dim=hidden)
+    classifier = MBTIClassifier(input_dim=hidden, head_hidden=head_hidden)
     classifier.load_state_dict(torch.load(ckpt / "classifier.pt", map_location=device, weights_only=True))
     encoder.to(device).eval()
     classifier.to(device).eval()

@@ -270,13 +270,30 @@ def predict(text: str, lang: str = "zh") -> dict:
         ) / 4, 4),
     }
 
+    # 后处理关键词：清洗 BPE 标记 + 归一化分数
+    keywords = {}
+    for dim, tokens in attr["keywords"].items():
+        cleaned = []
+        for t in tokens:
+            # 去掉 RoBERTa BPE 空格标记
+            word = t["token"].lstrip("Ġ").lstrip("Ċ").lstrip("âĢĶ")
+            if word in ("<s>", "</s>", "<pad>"):
+                continue
+            cleaned.append({"token": word, "score": round(t["score"], 6)})
+        # 归一化分数到 [0, 1] 方便前端渲染
+        if cleaned:
+            abs_max = max(abs(c["score"]) for c in cleaned) or 1e-9
+            for c in cleaned:
+                c["intensity"] = round(abs(c["score"]) / abs_max, 4)
+        keywords[dim] = cleaned[:12]  # 每维度最多 12 个
+
     # NLG 解读
     interpreter = _MBTIInterpreter()
     interp = interpreter.interpret(probs, attr["keywords"], lang=lang)
 
     return {
         "prediction": prediction,
-        "keywords": attr["keywords"],
+        "keywords": keywords,
         "interpretation": {
             "EI": interp["interpretation"]["EI"],
             "SN": interp["interpretation"]["SN"],

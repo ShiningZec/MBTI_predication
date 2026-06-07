@@ -172,34 +172,70 @@ RoBERTaEncoder
 
 ## 训练结果
 
-RTX 4060 Laptop (8GB)，`max_length=256`，`batch_size=16`，3 epochs。
+数据集: zeyadkhalid/MBTI-500 (106,067 条 → 训练 84,853 / 测试 21,214)
 
-### 测试集指标
+### Baseline vs HP 优化对比
 
-| 维度 | Acc | Prec | Rec | F1 | AUC | MCC |
-|------|-----|------|-----|-----|-----|-----|
-| **EI** | 91.7% | 79.0% | 88.8% | 83.6% | 96.9% | 0.783 |
-| **SN** | 96.9% | 97.1% | 99.7% | 98.3% | 98.2% | 0.790 |
-| **TF** | 94.3% | 95.3% | 96.0% | 95.6% | 98.4% | 0.874 |
-| **JP** | 90.0% | 90.2% | 85.3% | 87.7% | 96.3% | 0.793 |
-| **Mean** | **93.2%** | — | — | **91.3%** | **97.4%** | **0.810** |
+| | Baseline | HP 最优 | 提升 |
+|------|:---:|:---:|:---:|
+| 模型 | roberta-base | **roberta-base** | — |
+| Pooling | mean | **cls** | — |
+| head_hidden | 64 | **512** | — |
+| max_length | 256 | **512** | — |
+| batch_size | 16 | **32** | — |
+| epochs | 3 | 7 (best) | — |
+| **Overall Acc** | 80.6% | **86.0%** | **+5.4%** |
+| Mean Acc | 93.2% | **95.1%** | +1.9% |
+| Mean F1 | 91.3% | **93.7%** | +2.4% |
 
-| 整体指标 | 值 |
-|----------|-----|
-| Exact Match（四维全对） | 80.6% |
-| Hamming Loss | 6.8% |
-| Macro MCC | 0.810 |
+### HP 最优逐维度指标
+
+| 维度 | Acc | F1 | AUC | MCC | 提升亮点 |
+|------|-----|-----|-----|-----|------|
+| **EI** | 94.7% | 0.885 | 0.976 | 0.836 | F1 +4.9% ← 最难维度大幅突破 |
+| **SN** | 97.9% | 0.989 | 0.983 | 0.844 | 接近饱和 |
+| **TF** | 95.6% | 0.966 | 0.988 | 0.903 | 全维最强 |
+| **JP** | 92.2% | 0.907 | 0.975 | 0.834 | F1 +3.0% |
+| **Mean** | **95.1%** | **0.937** | **0.980** | **0.854** | — |
+
+### 关键超参
+
+| 参数 | Baseline | HP 最优 | 来源 |
+|------|:---:|:---:|------|
+| pooling | mean | **cls** | HP 搜索 |
+| head_hidden | 64 | **512** | HP 搜索 |
+| dropout | 0.2 | 0.2 | — |
+| encoder_lr | 2e-5 | 2.84e-5 | HP 搜索 |
+| classifier_lr | 1e-4 | 1e-4 | — |
+| weight_decay | 0.01 | 0.01 | — |
 
 ### 可视化评估
 
 `python eval.py` 生成 4 张分析图 → `eval_output/`：
 
-| 图 | 说明 |
-|------|------|
-| `confusion_matrices.png` | 四维 2×2 混淆矩阵 |
-| `roc_curves.png` | 四维 ROC 曲线，AUC 均 > 0.96 |
-| `confidence_dist.png` | 置信度分布：正确 vs 错误 |
-| `radar.png` | 四维 Accuracy/F1/AUC 雷达图 |
+#### 混淆矩阵
+
+![Confusion Matrices](eval_output/best/confusion_matrices.png)
+
+TF 维度对角线最亮（区分度最高），EI 假阳性偏高（模型倾向判 E）。
+
+#### ROC 曲线
+
+![ROC Curves](eval_output/best/roc_curves.png)
+
+四维 AUC 均 > 0.975，区分能力极强。
+
+#### 置信度分布
+
+![Confidence Distribution](eval_output/best/confidence_dist.png)
+
+正确预测集中在高置信区（右侧），错误预测集中在 0.5 附近——模型"自知其不知"。
+
+#### 雷达图
+
+![Radar Chart](eval_output/best/radar.png)
+
+TF 维度 Accuracy/F1/AUC 最均衡（最大面积），EI 的 F1 相对偏低。
 
 ---
 
@@ -377,15 +413,15 @@ python explain.py --file input.txt --lang en
 | Exact Match | **80.6%** |
 | Macro MCC | **0.810** |
 
-### 尚未完成 📋
+### 后续优化方向 📋
 
 | 事项 | 说明 | 优先级 |
 |------|------|--------|
-| **超参数调优** | `max_length`(128/256/512)、`batch_size`(8/16/32)、`dropout`(0.1/0.2/0.3)、`learning_rate`(1e-5/2e-5/5e-5)、`head_hidden`(32/64/128)、Pooling 策略(cls/mean/max) 的网格搜索或 Optuna 自动化调优 | 🔴 高 |
-| **max_length=512 重训** | 当前模型训练用 256，eval 用 512 已大幅提升；用 512 重新训练预期进一步提 3-5% | 🔴 高 |
-| **epoch 增加** | 当前仅 3 epoch，Test Loss 尚在下降，5-8 epoch 可能进一步提升 | 🟡 中 |
-| **LoRA 微调** | 低秩适配，减少训练参数，加快训练速度 | 🟢 低 |
-| **前端页面** | 用户输入 + 结果可视化 + 解读展示 | 🟢 低 |
+| **roberta-large** | 355M 参数 (1024 维)，预期额外 +1-2% | 🔴 高 |
+| **针对性调优 EI / JP** | 两个最难维度的 pos_weight 精调，仍有 1-2% 空间 | 🟡 中 |
+| **用户级数据分割** | 当前按 post 随机分，同一用户多帖跨 train/test 可能虚高 | 🟡 中 |
+| **全量数据 HP 搜索** | 当前用 30-50% 子集加速，全量可能翻出更优连续参数 | 🟡 中 |
+| **LoRA 微调** | 低秩适配，减少训练参数，加速训练 | 🟢 低 |
 | **AB 对比实验** | TF-IDF+LR baseline vs RoBERTa-base vs RoBERTa-large 系统对比 | 🟢 低 |
 
 ---

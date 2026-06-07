@@ -23,6 +23,8 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass, field
+
+from tqdm import tqdm
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -352,7 +354,9 @@ class MBTITrainer:
         total_loss = 0.0
         n_batches = len(loader)
 
-        for batch_idx, batch in enumerate(loader):
+        pbar = tqdm(loader, desc=f"  Epoch {self.current_epoch}",
+                     leave=False, ncols=90)
+        for batch_idx, batch in enumerate(pbar):
             input_ids = batch["input_ids"].to(self.device)
             attention_mask = batch["attention_mask"].to(self.device)
             labels = batch["labels"].to(self.device)
@@ -391,18 +395,11 @@ class MBTITrainer:
 
             total_loss += loss.item() * self.config.gradient_accumulation_steps
 
-            # 日志
-            if batch_idx > 0 and batch_idx % self.config.log_interval == 0:
-                print(f"  Epoch {self.current_epoch} | "
-                      f"Batch {batch_idx}/{n_batches} | "
-                      f"Loss: {loss.item():.4f} | "
-                      f"LR: {scheduler.get_last_lr()[0]:.2e}")
-
-            # 中途评估
-            if (self.config.eval_interval > 0
-                    and self.global_step % self.config.eval_interval == 0):
-                # 仅在没有 test_loader 时跳过（fit 中已有 per-epoch eval）
-                pass
+            # 进度条实时显示
+            pbar.set_postfix({
+                "loss": f"{loss.item():.3f}",
+                "lr": f"{scheduler.get_last_lr()[0]:.1e}",
+            })
 
         return total_loss / n_batches
 
@@ -481,6 +478,7 @@ class MBTITrainer:
             "model": self.encoder.model_name,
             "pooling": self.encoder.pooling_name,
             "hidden_size": self.encoder.hidden_size,
+            "head_hidden": self.classifier.heads["EI"].fc1.out_features,
             "config": {
                 "num_epochs": self.config.num_epochs,
                 "batch_size": self.config.batch_size,
