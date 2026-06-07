@@ -413,16 +413,28 @@ python explain.py --file input.txt --lang en
 | Exact Match | **80.6%** |
 | Macro MCC | **0.810** |
 
-### 后续优化方向 📋
+### 后续优化方向
+
+**模型层面：**
 
 | 事项 | 说明 | 优先级 |
-|------|------|--------|
-| **roberta-large** | 355M 参数 (1024 维)，预期额外 +1-2% | 🔴 高 |
-| **针对性调优 EI / JP** | 两个最难维度的 pos_weight 精调，仍有 1-2% 空间 | 🟡 中 |
-| **用户级数据分割** | 当前按 post 随机分，同一用户多帖跨 train/test 可能虚高 | 🟡 中 |
-| **全量数据 HP 搜索** | 当前用 30-50% 子集加速，全量可能翻出更优连续参数 | 🟡 中 |
-| **LoRA 微调** | 低秩适配，减少训练参数，加速训练 | 🟢 低 |
-| **AB 对比实验** | TF-IDF+LR baseline vs RoBERTa-base vs RoBERTa-large 系统对比 | 🟢 低 |
+|------|------|:---:|
+| roberta-large | 355M 参数 (1024 维)，预期额外 +1-2% | High |
+| 针对性调优 EI / JP | 两个最难维度的 pos_weight 精调 | Medium |
+| 用户级数据分割 | 同一用户多帖跨 train/test 可能虚高 ~1-2% | Medium |
+| 全量数据 HP 搜索 | 当前用 30-50% 子集，全量可能翻出更优参数 | Medium |
+| LoRA 微调 | 减少可训参数、加速训练 | Low |
+| AB 对比实验 | TF-IDF+LR vs RoBERTa-base vs RoBERTa-large | Low |
+
+**前端层面（已规划，待实施）：**
+
+详见 [docs/frontend-improvement-plan.md](docs/frontend-improvement-plan.md)。核心改进：
+
+- 新增 Model Comparison 视图：Baseline vs HP 最优模型参数/指标/图表交互式对比（Canvas/SVG）
+- 新增 Hyperparameter Search 视图：20 个 trial 的散点图 + 平行坐标可视化
+- 4 个 PNG 静态评估图替换为 Canvas 交互式图表（hover tooltip、数据驱动渲染）
+- 学术报告风格（Tableau 色板、等宽数字、克制配色）
+- 零外部依赖，纯 HTML/CSS/JS 单文件
 
 ---
 
