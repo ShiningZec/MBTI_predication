@@ -469,13 +469,196 @@ def api_predict(req: PredictRequest):
 
 
 # ============================================================
+# 新增 API 端点
+# ============================================================
+
+def _load_json(path: Path) -> dict | None:
+    """安全加载 JSON 文件。"""
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
+
+
+def _load_jsonl(path: Path) -> list[dict]:
+    """加载 JSONL 文件，返回字典列表。"""
+    items = []
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        items.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+    return items
+
+
+@app.get("/api/compare")
+def api_compare():
+    """对比 Baseline vs Best 模型的指标和参数。
+
+    返回：
+    - baseline: metrics + training_info
+    - best: metrics + training_info
+    - deltas: 各指标的绝对差值和相对提升百分比
+    - images: 可用的对比图片 URL
+    """
+    baseline_metrics = _load_json(_PROJECT_ROOT / "eval_output" / "baseline" / "metrics.json")
+    best_metrics = _load_json(_PROJECT_ROOT / "eval_output" / "best" / "metrics.json")
+
+    # 查找 training_info（可能在 output 目录下）
+    baseline_ti = None
+    best_ti = None
+    output_dir = _PROJECT_ROOT / "output"
+    if output_dir.is_dir():
+        for run_dir in sorted(output_dir.iterdir(), reverse=True):
+            if not run_dir.is_dir() or run_dir.name.startswith("."):
+                continue
+            ti = _load_json(run_dir / "training_info.json")
+            if ti and baseline_ti is None:
+                baseline_ti = ti
+            elif ti and best_ti is None:
+                best_ti = ti
+
+    # 计算 deltas
+    dims = ["EI", "SN", "TF", "JP"]
+    agg_keys = ["exact_match", "hamming_loss", "mean_acc", "mean_f1", "mean_auc", "macro_mcc"]
+    dim_keys = ["accuracy", "precision", "recall", "f1", "auc", "mcc"]
+
+    deltas = {}
+    if baseline_metrics and best_metrics:
+        for dim in dims:
+            if dim in baseline_metrics and dim in best_metrics:
+                dim_delta = {}
+                for k in dim_keys:
+                    bv = baseline_metrics[dim].get(k)
+                    bv_best = best_metrics[dim].get(k)
+                    if bv is not None and bv_best is not None:
+                        abs_delta = bv_best - bv
+                        rel_delta = (abs_delta / bv * 100) if bv != 0 else 0
+                        dim_delta[k] = {
+                            "baseline": round(bv, 4),
+                            "best": round(bv_best, 4),
+                            "abs_delta": round(abs_delta, 4),
+                            "rel_delta_pct": round(rel_delta, 2),
+                        }
+                deltas[dim] = dim_delta
+
+        for k in agg_keys:
+            bv = baseline_metrics.get(k)
+            bv_best = best_metrics.get(k)
+            if bv is not None and bv_best is not None:
+                abs_delta = bv_best - bv
+                rel_delta = (abs_delta / bv * 100) if bv != 0 else 0
+                deltas[k] = {
+                    "baseline": round(bv, 4),
+                    "best": round(bv_best, 4),
+                    "abs_delta": round(abs_delta, 4),
+                    "rel_delta_pct": round(rel_delta, 2),
+                }
+
+    # 可用的图片列表
+    image_names = ["confusion_matrices.png", "roc_curves.png", "radar.png", "confidence_dist.png"]
+    images = []
+    for name in image_names:
+        bl_path = _PROJECT_ROOT / "eval_output" / "baseline" / name
+        be_path = _PROJECT_ROOT / "eval_output" / "best" / name
+        entry = {"name": name.replace(".png", "").replace("_", " ").title()}
+        if bl_path.exists():
+            entry["baseline_url"] = f"/static/eval-baseline/{name}"
+        if be_path.exists():
+            entry["best_url"] = f"/static/eval-best/{name}"
+        if "baseline_url" in entry or "best_url" in entry:
+            images.append(entry)
+
+    return {
+        "baseline": baseline_metrics,
+        "best": best_metrics,
+        "baseline_training": baseline_ti,
+        "best_training": best_ti,
+        "deltas": deltas,
+        "images": images,
+        "best_mean_acc": best_metrics.get("mean_acc") if best_metrics else None,
+        "baseline_mean_acc": baseline_metrics.get("mean_acc") if baseline_metrics else None,
+    }
+
+
+@app.get("/api/trials")
+def api_trials():
+    """返回超参数搜索的全部 20 个 trial 记录。
+
+    返回：
+    - trials: 全部 trial 数据（含 phase、params、metrics）
+    - phases: 各 phase 的 trial 数量与索引范围
+    - best_trial_index: 全局最佳 trial（按 mean_acc）
+    - best_config: 最优超参数离散值
+    """
+    trials = _load_jsonl(_PROJECT_ROOT / "test" / "trials_summary.jsonl")
+
+    # 分析 phase 分组
+    phases = {}
+    best_idx = -1
+    best_acc = -1.0
+    for i, t in enumerate(trials):
+        ph = t.get("phase", "unknown")
+        if ph not in phases:
+            phases[ph] = {"name": ph, "count": 0, "start_idx": i, "end_idx": i, "trials": []}
+        phases[ph]["count"] += 1
+        phases[ph]["end_idx"] = i
+        phases[ph]["trials"].append(i)
+
+        acc = t.get("metrics", {}).get("mean_acc", 0)
+        if acc > best_acc:
+            best_acc = acc
+            best_idx = i
+
+    # 加载最优配置
+    best_config = _load_json(_PROJECT_ROOT / "test" / "best_config.json")
+
+    return {
+        "trials": trials,
+        "phases": {k: {"name": v["name"], "count": v["count"], "trials": v["trials"]} for k, v in phases.items()},
+        "total_trials": len(trials),
+        "best_trial_index": best_idx,
+        "best_mean_acc": best_acc,
+        "best_config": best_config,
+    }
+
+
+@app.get("/api/best-config")
+def api_best_config():
+    """返回超参数搜索的最优配置。"""
+    config = _load_json(_PROJECT_ROOT / "test" / "best_config.json")
+    if config:
+        return config
+    raise HTTPException(status_code=404, detail="best_config.json 未找到")
+
+
+# ============================================================
 # 静态文件挂载（必须在路由之后）
 # ============================================================
 
-# 评估图片
+# 评估图片 — baseline
+eval_baseline_dir = _PROJECT_ROOT / "eval_output" / "baseline"
+if eval_baseline_dir.exists():
+    app.mount("/static/eval-baseline", StaticFiles(directory=str(eval_baseline_dir)), name="eval_baseline")
+
+# 评估图片 — best
+eval_best_dir = _PROJECT_ROOT / "eval_output" / "best"
+if eval_best_dir.exists():
+    app.mount("/static/eval-best", StaticFiles(directory=str(eval_best_dir)), name="eval_best")
+
+# 评估图片 — 根目录（兼容旧路径）
 eval_dir = _PROJECT_ROOT / "eval_output"
 if eval_dir.exists():
     app.mount("/static/eval", StaticFiles(directory=str(eval_dir)), name="eval_static")
+
+# data_viz 图片
+data_viz_dir = _PROJECT_ROOT / "data_viz"
+if data_viz_dir.exists():
+    app.mount("/static/data_viz", StaticFiles(directory=str(data_viz_dir)), name="data_viz_static")
 
 # 前端页面 - 挂载到根路径
 frontend_dir = _PROJECT_ROOT / "src" / "app"
