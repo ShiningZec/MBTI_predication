@@ -6,7 +6,8 @@
 <title>MBTI AI 预测系统</title>
 <style>
 /* ============================================================
-   M3 Dark Theme — Pure CSS, zero dependencies
+   Academic Dark Theme — Pure CSS, zero dependencies
+   Tableau 10 palette, subtle grid, tabular-nums
    ============================================================ */
 :root {
   --bg-root: #0d0f13;
@@ -34,6 +35,22 @@
   --shadow-2: 0 2px 8px rgba(0,0,0,.5);
   --ease: 250ms cubic-bezier(0.2,0,0,1);
   --sidebar-w: 260px;
+
+  /* Tableau 10 academic palette */
+  --c-blue: #4e79a7;
+  --c-orange: #f28e2b;
+  --c-red: #e15759;
+  --c-cyan: #76b7b2;
+  --c-green: #59a14f;
+  --c-yellow: #edc948;
+  --c-purple: #b07aa1;
+  --c-pink: #ff9da7;
+  --c-brown: #9c755f;
+  --c-gray: #bab0ac;
+
+  /* Phase colors */
+  --c-phase1: #4e79a7;
+  --c-phase2: #f28e2b;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{font-size:16px;-webkit-font-smoothing:antialiased;color-scheme:dark}
@@ -63,7 +80,7 @@ body{
 .sidebar-head .dot.checking{background:var(--warn);animation:pulse 1.5s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-.nav-list{flex:1;padding:6px 12px;display:flex;flex-direction:column;gap:2px}
+.nav-list{flex:1;padding:6px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
 .nav-item{
   display:flex;align-items:center;gap:12px;padding:10px 16px;border:none;
   background:transparent;color:var(--text2);font-size:14px;font-weight:500;
@@ -79,6 +96,123 @@ body{
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .view{height:100%;display:flex;flex-direction:column}
 .view.hidden{display:none}
+
+/* View fade-in animation */
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.view:not(.hidden){animation:viewIn .2s ease-out}
+
+/* Scrollable content views */
+.scroll-view{padding:24px;overflow-y:auto;height:100%}
+
+/* ---- Section headings ---- */
+.sec-title{
+  font-size:18px;font-weight:600;letter-spacing:-.01em;margin-bottom:4px;
+}
+.sec-sub{font-size:13px;color:var(--text3);margin-bottom:20px;font-variant-numeric:tabular-nums}
+
+/* ---- Cards ---- */
+.card{
+  background:var(--bg-surface);border-radius:var(--radius-lg);
+  padding:26px;margin-bottom:18px;box-shadow:var(--shadow-1);
+}
+.card h3{
+  font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text2);margin-bottom:16px;
+}
+
+/* ---- Chart grid ---- */
+.chart-row{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:20px}
+.chart-row .chart-box{background:var(--bg-surface);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-1)}
+.chart-row .chart-box.full{grid-column:1/-1}
+.chart-box .chart-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px}
+.chart-box canvas{width:100%;display:block;border-radius:var(--radius-sm)}
+.chart-box svg{width:100%;display:block}
+
+/* ---- Metric delta table ---- */
+.delta-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13px}
+.delta-table th,.delta-table td{padding:8px 12px;text-align:right}
+.delta-table th{font-weight:600;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid rgba(255,255,255,.08)}
+.delta-table th:first-child,.delta-table td:first-child{text-align:left;font-weight:600}
+.delta-table td{border-bottom:1px solid rgba(255,255,255,.03)}
+.delta-table tr:hover td{background:rgba(255,255,255,.02)}
+.delta-up{color:var(--success)}.delta-down{color:var(--error)}.delta-neutral{color:var(--text3)}
+
+/* ---- Chips ---- */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;padding:6px 14px;
+  background:var(--bg-surface-high);border-radius:var(--radius-full);
+  font-size:12px;font-weight:500;color:var(--text2);
+}
+
+/* ---- Metrics grid ---- */
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.mcard-sm{
+  background:var(--bg-surface-high);border-radius:var(--radius-lg);
+  padding:22px 14px 18px;text-align:center;box-shadow:var(--shadow-1);
+}
+.mcard-sm .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:12px}
+.mr{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
+.mr .mk{color:var(--text2);font-size:11px}
+.mr .mv{font-weight:600}
+
+.moverall{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:14px 20px;background:var(--bg-surface-high);border-radius:var(--radius);margin-bottom:20px;font-size:13px}
+.moverall .mi{display:flex;align-items:center;gap:5px}
+.moverall .mi .mk{color:var(--text2)}.moverall .mi .mv{font-weight:600}
+
+/* ---- Tabs ---- */
+.tab-bar{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--outline)}
+.tab-btn{
+  padding:10px 18px;border:none;background:transparent;color:var(--text2);
+  font-size:13px;font-weight:500;cursor:pointer;position:relative;transition:color var(--ease);
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--primary)}
+.tab-btn.active::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;
+  background:var(--primary);border-radius:2px 2px 0 0;
+}
+
+/* ---- Model selector toggle ---- */
+.model-toggle{display:flex;gap:0;margin-bottom:20px;background:var(--bg-surface-high);border-radius:var(--radius-full);padding:3px;width:fit-content}
+.model-toggle button{
+  padding:8px 20px;border:none;background:transparent;color:var(--text2);
+  font-size:13px;font-weight:500;cursor:pointer;border-radius:var(--radius-full);transition:all var(--ease);
+}
+.model-toggle button.active{background:var(--primary-bg);color:var(--primary);font-weight:600}
+
+/* ---- Image gallery ---- */
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.gallery-item{
+  background:var(--bg-surface-high);border-radius:var(--radius);overflow:hidden;
+  cursor:pointer;transition:transform var(--ease),box-shadow var(--ease);
+}
+.gallery-item:hover{transform:translateY(-2px);box-shadow:var(--shadow-2)}
+.gallery-item img{width:100%;display:block;object-fit:cover;aspect-ratio:4/3}
+.gallery-item .gal-label{font-size:12px;color:var(--text2);padding:10px 14px;font-weight:500}
+
+/* ---- Lightbox ---- */
+.lightbox{
+  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  animation:lbIn .2s ease-out;
+}
+.lightbox.hidden{display:none}
+@keyframes lbIn{from{opacity:0}to{opacity:1}}
+.lightbox img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:var(--radius)}
+.lightbox .lb-title{font-size:14px;color:var(--text2);margin-top:14px}
+.lightbox .lb-close{
+  position:absolute;top:20px;right:24px;background:none;border:none;color:var(--text);
+  font-size:28px;cursor:pointer;opacity:.7;transition:opacity var(--ease);
+}
+.lightbox .lb-close:hover{opacity:1}
+.lightbox .lb-nav{
+  position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.08);
+  border:none;color:var(--text);font-size:32px;cursor:pointer;padding:12px 16px;border-radius:var(--radius-sm);
+  transition:background var(--ease);
+}
+.lightbox .lb-nav:hover{background:rgba(255,255,255,.15)}
+.lightbox .lb-prev{left:20px}.lightbox .lb-next{right:20px}
 
 /* ==== Chat View ==== */
 .chat-msgs{flex:1;overflow-y:auto;padding:32px 24px 16px;display:flex;flex-direction:column;gap:20px}
@@ -158,65 +292,24 @@ body{
 .chat-err{color:var(--error);font-size:13px;padding:8px 28px 0;display:none}
 .chat-err.v{display:block}
 
-/* ==== Model View ==== */
-.model-view{padding:24px;overflow-y:auto;height:100%}
-.mcard{
-  background:var(--bg-surface);border-radius:var(--radius-lg);
-  padding:26px;margin-bottom:18px;box-shadow:var(--shadow-1);
+/* ---- Tooltip ---- */
+#chartTooltip{
+  position:fixed;pointer-events:none;z-index:100;opacity:0;
+  background:var(--bg-surface-highest);color:var(--text);padding:8px 14px;
+  border-radius:var(--radius-sm);font-size:12px;font-variant-numeric:tabular-nums;
+  box-shadow:var(--shadow-2);white-space:nowrap;transition:opacity .15s ease-out;
+  border:1px solid rgba(255,255,255,.08);
 }
-.mcard h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:16px}
+#chartTooltip.show{opacity:1}
 
-/* Chips */
-.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
-.chip{
-  display:inline-flex;align-items:center;gap:5px;padding:6px 14px;
-  background:var(--bg-surface-high);border-radius:var(--radius-full);
-  font-size:12px;font-weight:500;color:var(--text2);
+/* ---- Number rolling ---- */
+.num-roll{display:inline-block;transition:color .4s ease}
+
+/* ---- Responsive ---- */
+@media(max-width:900px){
+  .chart-row{grid-template-columns:1fr}
+  .gallery{grid-template-columns:repeat(2,1fr)}
 }
-
-/* Metrics grid */
-.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
-.mcard-sm{
-  background:var(--bg-surface-high);border-radius:var(--radius-lg);
-  padding:22px 14px 18px;text-align:center;box-shadow:var(--shadow-1);
-}
-.mcard-sm .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:12px}
-.mr{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
-.mr .mk{color:var(--text2);font-size:11px}
-.mr .mv{font-weight:600}
-
-.moverall{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:14px 20px;background:var(--bg-surface-high);border-radius:var(--radius);margin-bottom:20px;font-size:13px}
-.moverall .mi{display:flex;align-items:center;gap:5px}
-.moverall .mi .mk{color:var(--text2)}.moverall .mi .mv{font-weight:600}
-
-/* Tabs */
-.tab-bar{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--outline)}
-.tab-btn{
-  padding:10px 18px;border:none;background:transparent;color:var(--text2);
-  font-size:13px;font-weight:500;cursor:pointer;position:relative;transition:color var(--ease);
-}
-.tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--primary)}
-.tab-btn.active::after{
-  content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;
-  background:var(--primary);border-radius:2px 2px 0 0;transition:left var(--ease);
-}
-
-/* Charts grid — confusion & confidence span full width */
-.charts-g{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:12px}
-.charts-g img{
-  width:100%;border-radius:var(--radius);object-fit:contain;
-  background:var(--bg-surface-highest);box-shadow:var(--shadow-1);display:none;
-}
-.charts-g img.show{display:block}
-.charts-g img.full{grid-column:1/-1;max-height:520px}
-
-/* Gauge */
-.gauge-svg{width:60px;height:60px}
-.gauge-bg{fill:none;stroke:var(--bg-surface-highest);stroke-width:5}
-.gauge-fg{fill:none;stroke:var(--primary);stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.2,0,0,1)}
-
-/* Responsive */
 @media(max-width:760px){
   .sidebar{width:68px;min-width:68px}
   .sidebar-head{font-size:0;justify-content:center;padding:18px 0}
@@ -226,9 +319,13 @@ body{
   .sidebar-foot{display:none}
   .chat-msgs{padding:16px 10px}
   .chat-bar{padding:10px 10px 14px}
-  .model-view{padding:14px}
+  .scroll-view{padding:14px}
   .mgrid{grid-template-columns:repeat(2,1fr);gap:8px}
-  .charts-g{grid-template-columns:1fr;gap:14px}
+  .chart-row{grid-template-columns:1fr;gap:14px}
+  .gallery{grid-template-columns:1fr 1fr}
+}
+@media(max-width:500px){
+  .gallery{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
@@ -244,6 +341,15 @@ body{
   <nav class="nav-list" id="navList">
     <button class="nav-item active" data-view="chat">
       <span class="ico">💬</span> <span>对话分析</span>
+    </button>
+    <button class="nav-item" data-view="compare">
+      <span class="ico">⚖️</span> <span>模型对比</span>
+    </button>
+    <button class="nav-item" data-view="trials">
+      <span class="ico">🔍</span> <span>超参数搜索</span>
+    </button>
+    <button class="nav-item" data-view="dataviz">
+      <span class="ico">🖼️</span> <span>数据探索</span>
     </button>
     <button class="nav-item" data-view="model">
       <span class="ico">📊</span> <span>模型细节</span>
@@ -274,15 +380,76 @@ body{
     <div class="chat-err" id="chatErr"></div>
   </div>
 
-  <!-- Model View -->
-  <div class="view hidden model-view" id="modelView">
-    <div class="mcard">
+  <!-- Model Comparison View -->
+  <div class="view hidden scroll-view" id="compareView">
+    <div class="sec-title">Baseline vs Best 模型对比</div>
+    <div class="sec-sub" id="compareSub"></div>
+
+    <div class="card" id="compareSummary">
+      <h3>关键指标对比</h3>
+      <div class="moverall" id="compareOverall"></div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-box full"><div class="chart-title">各维度指标对比 (Baseline vs Best)</div><canvas id="cCompareBar"></canvas></div>
+      <div class="chart-box"><div class="chart-title">六维雷达图</div><svg id="cDualRadar"></svg></div>
+      <div class="chart-box"><div class="chart-title">置信度分布对比（示意）</div><canvas id="cConfHist"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>详细指标差异</h3>
+      <div style="overflow-x:auto"><table class="delta-table" id="deltaTable"></table></div>
+    </div>
+
+    <div class="card">
+      <h3>评估图片对比</h3>
+      <div class="tab-bar" id="compareImgTabs"></div>
+      <div id="compareImgArea" style="display:flex;gap:14px;flex-wrap:wrap"></div>
+    </div>
+  </div>
+
+  <!-- Hyperparameter Search View -->
+  <div class="view hidden scroll-view" id="trialsView">
+    <div class="sec-title">超参数搜索轨迹</div>
+    <div class="sec-sub" id="trialsSub"></div>
+
+    <div class="card">
+      <h3>搜索概览</h3>
+      <div class="chip-row" id="trialsChips"></div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-box full"><div class="chart-title">Trial × Mean Accuracy（按 Phase 分色）</div><canvas id="cTrialScatter"></canvas></div>
+      <div class="chart-box full"><div class="chart-title">平行坐标：超参数 → Mean Accuracy</div><canvas id="cParallelCoords"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>全部 Trial 记录</h3>
+      <div style="overflow-x:auto"><table class="delta-table" id="trialsTable"></table></div>
+    </div>
+  </div>
+
+  <!-- Data Exploration View -->
+  <div class="view hidden scroll-view" id="datavizView">
+    <div class="sec-title">数据探索图库</div>
+    <div class="sec-sub">data_viz/ 目录下的探索性数据分析图表</div>
+    <div class="gallery" id="dataVizGallery"></div>
+  </div>
+
+  <!-- Model Details View -->
+  <div class="view hidden scroll-view" id="modelView">
+    <div class="card">
       <h3>模型概况</h3>
+      <div class="model-toggle" id="modelToggle">
+        <button class="active" data-model="current">当前模型</button>
+        <button data-model="baseline">Baseline</button>
+        <button data-model="best">Best (HP Tuned)</button>
+      </div>
       <div class="chip-row" id="chipRow"></div>
       <div class="mgrid" id="mGrid"></div>
       <div class="moverall" id="mOverall"></div>
     </div>
-    <div class="mcard">
+    <div class="card">
       <h3>评估可视化</h3>
       <div class="tab-bar" id="evalTabs">
         <button class="tab-btn active" data-idx="0">混淆矩阵</button>
@@ -290,16 +457,28 @@ body{
         <button class="tab-btn" data-idx="2">雷达图</button>
         <button class="tab-btn" data-idx="3">置信度分布</button>
       </div>
-      <div class="charts-g" id="chartsG">
-        <img class="show full" data-src="confusion_matrices.png" alt="混淆矩阵">
+      <div class="charts-g" id="chartsG" style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:12px">
+        <img class="show" style="grid-column:1/-1;max-height:520px" data-src="confusion_matrices.png" alt="混淆矩阵">
         <img data-src="roc_curves.png" alt="ROC">
         <img data-src="radar.png" alt="雷达图">
-        <img class="full" data-src="confidence_dist.png" alt="置信度">
+        <img style="grid-column:1/-1;max-height:520px" data-src="confidence_dist.png" alt="置信度">
       </div>
     </div>
   </div>
 
 </main>
+
+<!-- Tooltip -->
+<div id="chartTooltip"></div>
+
+<!-- Lightbox -->
+<div class="lightbox hidden" id="lightbox">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <button class="lb-nav lb-prev" onclick="lbNav(-1)">‹</button>
+  <button class="lb-nav lb-next" onclick="lbNav(1)">›</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lb-title" id="lbTitle"></div>
+</div>
 
 <script>
 // ============================================================
@@ -309,7 +488,7 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
 // ============================================================
-// View switching
+// View switching with animation
 // ============================================================
 let currentView = 'chat';
 $('#navList').addEventListener('click', e => {
@@ -317,14 +496,24 @@ $('#navList').addEventListener('click', e => {
   if (!btn) return;
   const name = btn.dataset.view;
   if (!name || name === currentView) return;
-  // Deactivate all
+
   $$('.nav-item').forEach(b => b.classList.remove('active'));
   $$('.view').forEach(v => v.classList.add('hidden'));
-  // Activate
   btn.classList.add('active');
-  if (name === 'chat') $('#chatView').classList.remove('hidden');
-  else { $('#modelView').classList.remove('hidden'); loadModelInfo(); }
+
+  const viewMap = {
+    chat:'chatView', compare:'compareView', trials:'trialsView',
+    dataviz:'datavizView', model:'modelView'
+  };
+  const el = $('#' + viewMap[name]);
+  if (el) el.classList.remove('hidden');
   currentView = name;
+
+  // Lazy load
+  if (name === 'compare') loadCompare();
+  else if (name === 'trials') loadTrials();
+  else if (name === 'dataviz') loadDataViz();
+  else if (name === 'model') loadModelInfo();
 });
 
 // ============================================================
@@ -340,19 +529,727 @@ async function checkHealth() {
 }
 
 // ============================================================
-// Model Info
+// Tooltip singleton
+// ============================================================
+const tooltip = $('#chartTooltip');
+function showTT(ev, html) {
+  tooltip.innerHTML = html;
+  tooltip.classList.add('show');
+  moveTT(ev);
+}
+function moveTT(ev) {
+  let x = ev.clientX + 14, y = ev.clientY - 10;
+  if (x + tooltip.offsetWidth > window.innerWidth - 10) x = ev.clientX - tooltip.offsetWidth - 14;
+  if (y < 10) y = ev.clientY + 20;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+}
+function hideTT() { tooltip.classList.remove('show'); }
+
+// ============================================================
+// Chart4Lib — Pure Canvas/SVG chart functions
+// ============================================================
+
+// HiDPI setup for canvas
+function setupCanvas(canvas, w, h) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const cw = w || rect.width - 40;
+  const ch = h || (cw * 0.6);
+  canvas.width = cw * dpr;
+  canvas.height = ch * dpr;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = ch + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w: cw, h: ch };
+}
+
+// Shared colors (Tableau 10)
+const T10 = ['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ac'];
+const GRID_COLOR = 'rgba(255,255,255,0.04)';
+const AXIS_COLOR = 'rgba(255,255,255,0.15)';
+const TEXT_COLOR = '#8e9099';
+const TEXT_HIGHLIGHT = '#c4c6d0';
+
+// ==== ComparisonBar — Dual grouped bar chart ====
+function drawComparisonBar(canvas, data) {
+  const { ctx, w, h } = setupCanvas(canvas, null, 360);
+  const dims = data.dims || ['EI','SN','TF','JP'];
+  const baselineVals = data.baseline || [];
+  const bestVals = data.best || [];
+  const labels = data.labels || dims;
+  const pad = { top: 30, right: 40, bottom: 50, left: 50 };
+  const pw = w - pad.left - pad.right;
+  const ph = h - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = GRID_COLOR;
+
+  // Y axis grid
+  const yMax = Math.max(1, ...baselineVals, ...bestVals) * 1.12;
+  const ySteps = 5;
+  for (let i = 0; i <= ySteps; i++) {
+    const y = pad.top + ph * (1 - i / ySteps);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y);
+    ctx.strokeStyle = GRID_COLOR; ctx.stroke();
+    ctx.fillStyle = TEXT_COLOR; ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'right'; ctx.fillText((yMax * i / ySteps).toFixed(2), pad.left - 8, y + 4);
+  }
+
+  // Bars
+  const groupW = pw / dims.length;
+  const barW = Math.min(groupW * 0.18, 36);
+  const gap = barW * 0.4;
+
+  dims.forEach((dim, i) => {
+    const gx = pad.left + groupW * i + groupW / 2;
+    const bx = gx - barW - gap / 2;
+    const bxx = gx + gap / 2;
+    const bh = (baselineVals[i] / yMax) * ph;
+    const bhh = (bestVals[i] / yMax) * ph;
+
+    // Baseline bar
+    ctx.fillStyle = T10[0]; ctx.globalAlpha = 0.85;
+    roundRect(ctx, bx, pad.top + ph - bh, barW, bh, 3); ctx.fill();
+    // Best bar
+    ctx.fillStyle = T10[1]; ctx.globalAlpha = 0.85;
+    roundRect(ctx, bxx, pad.top + ph - bhh, barW, bhh, 3); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Values on top
+    ctx.fillStyle = TEXT_HIGHLIGHT; ctx.font = '10px Inter, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(baselineVals[i].toFixed(3), bx + barW / 2, pad.top + ph - bh - 6);
+    ctx.fillText(bestVals[i].toFixed(3), bxx + barW / 2, pad.top + ph - bhh - 6);
+
+    // X label
+    ctx.fillStyle = TEXT_COLOR; ctx.font = '12px Inter, sans-serif';
+    ctx.fillText(labels[i], gx, h - pad.bottom + 20);
+  });
+
+  // Legend
+  ctx.fillStyle = T10[0]; roundRect(ctx, w / 2 - 90, h - 16, 12, 12, 3); ctx.fill();
+  ctx.fillStyle = TEXT_COLOR; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Baseline', w / 2 - 72, h - 4);
+  ctx.fillStyle = T10[1]; roundRect(ctx, w / 2 + 12, h - 16, 12, 12, 3); ctx.fill();
+  ctx.fillText('Best', w / 2 + 32, h - 4);
+
+  // Hover detection
+  canvas.onmousemove = function(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    let found = false;
+    dims.forEach((dim, i) => {
+      const gx = pad.left + groupW * i + groupW / 2;
+      [ {x: gx - barW - gap/2, w: barW, val: baselineVals[i], label:'Baseline'},
+        {x: gx + gap/2, w: barW, val: bestVals[i], label:'Best'} ].forEach(b => {
+        if (mx >= b.x && mx <= b.x + b.w && my >= pad.top && my <= h - pad.bottom) {
+          showTT(ev, `<b>${dim}</b> ${b.label}<br>${b.val.toFixed(4)}`);
+          found = true;
+        }
+      });
+    });
+    if (!found) hideTT();
+  };
+  canvas.onmouseleave = () => hideTT();
+}
+
+function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r); ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath(); }
+
+// ==== DualRadar — SVG dual hex radar ====
+function drawDualRadar(svgEl, data) {
+  const dims = ['Acc','F1','AUC','MCC','Exact','1-Ham'];
+  const baselineVals = data.baseline || [0.93,0.91,0.97,0.81,0.81,0.93];
+  const bestVals = data.best || [0.95,0.94,0.98,0.86,0.86,0.95];
+  const cx = 200, cy = 200, r = 160, levels = 5;
+  const n = dims.length;
+
+  let svg = `<g transform="translate(${cx},${cy})">`;
+
+  // Grid rings
+  for (let l = 1; l <= levels; l++) {
+    const lr = r * l / levels;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const angle = -Math.PI / 2 + 2 * Math.PI * i / n;
+      pts.push(`${(lr * Math.cos(angle)).toFixed(1)},${(lr * Math.sin(angle)).toFixed(1)}`);
+    }
+    svg += `<polygon points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
+  }
+
+  // Grid lines
+  for (let i = 0; i < n; i++) {
+    const angle = -Math.PI / 2 + 2 * Math.PI * i / n;
+    const ex = r * Math.cos(angle), ey = r * Math.sin(angle);
+    svg += `<line x1="0" y1="0" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
+  }
+
+  // Labels
+  const vMin = data.vmin || 0.75;
+  const vMax = data.vmax || 1.0;
+  for (let i = 0; i < n; i++) {
+    const angle = -Math.PI / 2 + 2 * Math.PI * i / n;
+    const lr = r + 22;
+    const lx = lr * Math.cos(angle), ly = lr * Math.sin(angle);
+    svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="${TEXT_HIGHLIGHT}" font-size="11" font-weight="600" font-family="Inter,sans-serif">${dims[i]}</text>`;
+  }
+
+  // Polygons — baseline
+  const bp = dims.map((_, i) => {
+    const angle = -Math.PI / 2 + 2 * Math.PI * i / n;
+    const frac = Math.max(0, Math.min(1, (baselineVals[i] - vMin) / (vMax - vMin)));
+    const lr = frac * r;
+    return `${(lr * Math.cos(angle)).toFixed(1)},${(lr * Math.sin(angle)).toFixed(1)}`;
+  });
+  svg += `<polygon points="${bp.join(' ')}" fill="${T10[0]}" fill-opacity="0.25" stroke="${T10[0]}" stroke-width="2"/>`;
+
+  // Polygons — best
+  const bep = dims.map((_, i) => {
+    const angle = -Math.PI / 2 + 2 * Math.PI * i / n;
+    const frac = Math.max(0, Math.min(1, (bestVals[i] - vMin) / (vMax - vMin)));
+    const lr = frac * r;
+    return `${(lr * Math.cos(angle)).toFixed(1)},${(lr * Math.sin(angle)).toFixed(1)}`;
+  });
+  svg += `<polygon points="${bep.join(' ')}" fill="${T10[1]}" fill-opacity="0.2" stroke="${T10[1]}" stroke-width="2"/>`;
+
+  svg += '</g>';
+
+  // Legend
+  svg += `<g transform="translate(20, 410)"><rect x="0" y="0" width="12" height="12" rx="3" fill="${T10[0]}" opacity="0.85"/><text x="20" y="10" fill="${TEXT_COLOR}" font-size="11" font-family="Inter,sans-serif">Baseline</text></g>`;
+  svg += `<g transform="translate(140, 410)"><rect x="0" y="0" width="12" height="12" rx="3" fill="${T10[1]}" opacity="0.85"/><text x="20" y="10" fill="${TEXT_COLOR}" font-size="11" font-family="Inter,sans-serif">Best</text></g>`;
+
+  svgEl.innerHTML = `<svg viewBox="0 0 400 440" style="width:100%;max-width:500px;display:block;margin:0 auto">${svg}</svg>`;
+}
+
+// ==== ConfidenceHist — Dual histogram overlay ====
+function drawConfidenceHist(canvas, data) {
+  const { ctx, w, h } = setupCanvas(canvas, null, 280);
+  const pad = { top: 30, right: 30, bottom: 46, left: 50 };
+  const pw = w - pad.left - pad.right, ph = h - pad.top - pad.bottom;
+  const buckets = 10;
+  const baselineB = data.baseline || [0,1,2,5,8,6,4,2,1,0];
+  const bestB = data.best || [0,0,1,3,7,8,5,3,2,1];
+
+  ctx.clearRect(0, 0, w, h);
+  const allVals = [...baselineB, ...bestB];
+  const yMax = Math.max(...allVals, 1) * 1.15;
+
+  // Grid
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.top + ph * (1 - i / 5);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y);
+    ctx.strokeStyle = GRID_COLOR; ctx.stroke();
+    ctx.fillStyle = TEXT_COLOR; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(yMax * i / 5), pad.left - 8, y + 4);
+  }
+
+  const barW = pw / buckets * 0.4;
+  for (let i = 0; i < buckets; i++) {
+    const bx = pad.left + pw * (i + 0.5) / buckets;
+    const bhB = (baselineB[i] || 0) / yMax * ph;
+    const bhBest = (bestB[i] || 0) / yMax * ph;
+
+    ctx.fillStyle = T10[0]; ctx.globalAlpha = 0.7;
+    ctx.fillRect(bx - barW - 1, pad.top + ph - bhB, barW, bhB);
+    ctx.fillStyle = T10[1]; ctx.globalAlpha = 0.7;
+    ctx.fillRect(bx + 1, pad.top + ph - bhBest, barW, bhBest);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = TEXT_COLOR; ctx.font = '10px Inter, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(((i + 0.5) / buckets).toFixed(1), bx, h - pad.bottom + 16);
+  }
+  ctx.fillText('Confidence', w / 2, h - 4);
+
+  // Legend
+  ctx.fillStyle = T10[0]; ctx.globalAlpha = 0.7; ctx.fillRect(w/2-80, 8, 12, 12);
+  ctx.globalAlpha = 1; ctx.fillStyle = TEXT_COLOR; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Baseline', w/2-62, 18);
+  ctx.fillStyle = T10[1]; ctx.globalAlpha = 0.7; ctx.fillRect(w/2+10, 8, 12, 12);
+  ctx.globalAlpha = 1; ctx.fillText('Best', w/2+28, 18);
+}
+
+// ==== TrialScatter — Scatter plot with phase color ====
+function drawTrialScatter(canvas, data) {
+  const { ctx, w, h } = setupCanvas(canvas, null, 340);
+  const pad = { top: 26, right: 30, bottom: 48, left: 54 };
+  const pw = w - pad.left - pad.right, ph = h - pad.top - pad.bottom;
+  const trials = data.trials || [];
+  const phases = data.phases || {};
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Compute ranges
+  const means = trials.map(t => t.metrics?.mean_acc || 0);
+  let yMin = Math.min(...means), yMax = Math.max(...means);
+  const yPad = (yMax - yMin) * 0.12 || 0.02;
+  yMin -= yPad; yMax += yPad;
+
+  // Grid
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.top + ph * (1 - i / 5);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y);
+    ctx.strokeStyle = GRID_COLOR; ctx.stroke();
+    ctx.fillStyle = TEXT_COLOR; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText((yMin + (yMax - yMin) * i / 5).toFixed(3), pad.left - 8, y + 4);
+  }
+
+  // X ticks
+  const xTotal = trials.length;
+  for (let t = 0; t < xTotal; t++) {
+    const x = pad.left + pw * (t + 0.5) / xTotal;
+    if (t % 4 === 0) {
+      ctx.fillStyle = TEXT_COLOR; ctx.font = '10px Inter, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(t + 1, x, h - pad.bottom + 16);
+    }
+  }
+  ctx.fillText('Trial', w / 2, h - 4);
+
+  // Phase separator
+  const phaseKeys = Object.keys(phases).sort();
+  phaseKeys.forEach(pk => {
+    const p = phases[pk];
+    if (p.trials.length > 0) {
+      const sepX = pad.left + pw * (p.trials[p.trials.length-1] + 1) / xTotal;
+      ctx.beginPath(); ctx.moveTo(sepX, pad.top); ctx.lineTo(sepX, pad.top + ph);
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.setLineDash([4,6]); ctx.stroke(); ctx.setLineDash([]);
+    }
+  });
+
+  // Dots — staggered entrance animation
+  const phaseColors = { phase1: T10[0], phase2: T10[1] };
+  trials.forEach((t, i) => {
+    const x = pad.left + pw * (i + 0.5) / xTotal;
+    const y = pad.top + ph * (1 - (t.metrics?.mean_acc - yMin) / (yMax - yMin));
+    const r = i === data.bestIdx ? 7 : 4.5;
+    ctx.fillStyle = phaseColors[t.phase] || T10[0];
+    ctx.globalAlpha = i === data.bestIdx ? 1 : 0.7;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    if (i === data.bestIdx) {
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Inter, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('★ Best', x, y - 12);
+    }
+  });
+  ctx.globalAlpha = 1;
+
+  // Legend
+  ctx.fillStyle = phaseColors.phase1; ctx.globalAlpha = 0.7; ctx.fillRect(pad.left, h - 20, 10, 10);
+  ctx.globalAlpha = 1; ctx.fillStyle = TEXT_COLOR; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Phase 1', pad.left + 15, h - 9);
+  ctx.fillStyle = phaseColors.phase2; ctx.globalAlpha = 0.7; ctx.fillRect(pad.left + 80, h - 20, 10, 10);
+  ctx.globalAlpha = 1; ctx.fillText('Phase 2', pad.left + 95, h - 9);
+
+  // Hover
+  canvas.onmousemove = function(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    let found = false;
+    trials.forEach((t, i) => {
+      const x = pad.left + pw * (i + 0.5) / xTotal;
+      const y = pad.top + ph * (1 - (t.metrics?.mean_acc - yMin) / (yMax - yMin));
+      if (Math.hypot(mx - x, my - y) < 20) {
+        const m = t.metrics || {};
+        showTT(ev, `<b>Trial ${i+1}</b> [${t.phase}]<br>Mean Acc: ${m.mean_acc?.toFixed(4)||'?'}<br>Exact: ${m.exact_match?.toFixed(3)||'?'}<br>F1: ${m.mean_f1?.toFixed(4)||'?'}`);
+        found = true;
+      }
+    });
+    if (!found) hideTT();
+  };
+  canvas.onmouseleave = () => hideTT();
+}
+
+// ==== ParallelCoords — 5-axis parallel coordinates ====
+function drawParallelCoords(canvas, data) {
+  const { ctx, w, h } = setupCanvas(canvas, null, 380);
+  const pad = { top: 40, right: 40, bottom: 50, left: 30 };
+  const pw = w - pad.left - pad.right, ph = h - pad.top - pad.bottom;
+  const trials = data.trials || [];
+
+  // Extract params
+  const axes = [
+    { key: 'dropout', label: 'Dropout', min: 0, max: 0.4 },
+    { key: 'encoder_lr', label: 'Encoder LR', min: 0, max: 6e-5 },
+    { key: 'classifier_lr', label: 'Classifier LR', min: 0, max: 3e-4 },
+    { key: 'weight_decay', label: 'Weight Decay', min: 0, max: 0.007 },
+    { key: 'warmup_ratio', label: 'Warmup Ratio', min: 0, max: 0.2 },
+  ];
+
+  ctx.clearRect(0, 0, w, h);
+
+  const axX = axes.map((_, i) => pad.left + pw * i / (axes.length - 1));
+
+  // Axes
+  axes.forEach((ax, i) => {
+    const x = axX[i];
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ph);
+    ctx.strokeStyle = AXIS_COLOR; ctx.lineWidth = 1; ctx.stroke();
+
+    // Ticks
+    for (let j = 0; j <= 5; j++) {
+      const y = pad.top + ph * j / 5;
+      ctx.fillStyle = TEXT_COLOR; ctx.font = '9px Inter, sans-serif'; ctx.textAlign = 'center';
+      const val = ax.min + (ax.max - ax.min) * (1 - j / 5);
+      let valStr;
+      if (Math.abs(val) < 0.001) valStr = '0';
+      else if (val < 0.01) valStr = val.toExponential(1);
+      else valStr = val.toFixed(3);
+      ctx.fillText(valStr, x, y + 3);
+    }
+
+    // Label
+    ctx.fillStyle = TEXT_HIGHLIGHT; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(ax.label, x, pad.top - 12);
+  });
+
+  // Normalize helper
+  function norm(val, min, max) {
+    return Math.max(0, Math.min(1, (val - min) / (max - min || 1)));
+  }
+
+  // Lines — colored by mean_acc
+  const phaseColors = { phase1: T10[0], phase2: T10[1] };
+  trials.forEach((t, i) => {
+    const params = t.params || {};
+    const color = phaseColors[t.phase] || T10[0];
+    const alpha = i === data.bestIdx ? 0.9 : 0.25;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = i === data.bestIdx ? 2.2 : 1;
+    ctx.beginPath();
+    let first = true;
+    axes.forEach((ax, j) => {
+      const val = params[ax.key] != null ? params[ax.key] : (ax.min + ax.max) / 2;
+      const frac = norm(val, ax.min, ax.max);
+      const y = pad.top + ph * (1 - frac);
+      if (first) { ctx.moveTo(axX[j], y); first = false; }
+      else ctx.lineTo(axX[j], y);
+    });
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+
+  // Legend
+  ctx.fillStyle = phaseColors.phase1; ctx.globalAlpha = 0.7; ctx.fillRect(pad.left, h - 20, 10, 10);
+  ctx.globalAlpha = 1; ctx.fillStyle = TEXT_COLOR; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Phase 1', pad.left + 15, h - 9);
+  ctx.fillStyle = phaseColors.phase2; ctx.globalAlpha = 0.7; ctx.fillRect(pad.left + 80, h - 20, 10, 10);
+  ctx.globalAlpha = 1; ctx.fillText('Phase 2', pad.left + 95, h - 9);
+}
+
+// ==== GaugeRing — Enhanced SVG gauge (animated) ====
+function drawGaugeRing(svgEl, value, label, color) {
+  const c = color || 'var(--primary)';
+  const v = Math.max(0, Math.min(1, value));
+  const circ = 2 * Math.PI * 38;
+  svgEl.innerHTML = `<svg viewBox="0 0 90 90" style="width:70px;height:70px">
+    <circle cx="45" cy="45" r="38" fill="none" stroke="var(--bg-surface-highest)" stroke-width="6"/>
+    <circle cx="45" cy="45" r="38" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ*(1-v)).toFixed(1)}"
+      transform="rotate(-90 45 45)" style="transition: stroke-dashoffset .8s cubic-bezier(.2,0,0,1)"/>
+    <text x="45" y="43" text-anchor="middle" fill="var(--text)" font-size="16" font-weight="700" font-family="Inter,sans-serif">${Math.round(v*100)}%</text>
+    <text x="45" y="59" text-anchor="middle" fill="var(--text2)" font-size="9" font-family="Inter,sans-serif">${label||''}</text>
+  </svg>`;
+}
+
+// ============================================================
+// Model Comparison View
+// ============================================================
+let compareLoaded = false;
+async function loadCompare() {
+  if (compareLoaded) return;
+  try {
+    const r = await fetch('/api/compare');
+    if (!r.ok) return;
+    const d = await r.json();
+    renderCompare(d);
+    compareLoaded = true;
+  } catch(e) { console.error('loadCompare', e); }
+}
+
+function renderCompare(d) {
+  const bl = d.baseline || {};
+  const be = d.best || {};
+  const deltas = d.deltas || {};
+
+  // Summary subtitle
+  const blAcc = (bl.mean_acc || 0) * 100;
+  const beAcc = (be.mean_acc || 0) * 100;
+  const gain = ((be.mean_acc || 0) - (bl.mean_acc || 0)) * 100;
+  $('#compareSub').innerHTML = `Baseline Mean Acc: <b>${blAcc.toFixed(2)}%</b> → Best Mean Acc: <b>${beAcc.toFixed(2)}%</b> (${gain >= 0 ? '+' : ''}${gain.toFixed(2)} pp)`;
+
+  // Summary chips
+  const ovKeys = [
+    { k: 'mean_acc', l: 'Mean Acc', fmt: v => (v*100).toFixed(1)+'%' },
+    { k: 'mean_f1', l: 'Mean F1', fmt: v => (v*100).toFixed(1)+'%' },
+    { k: 'mean_auc', l: 'Mean AUC', fmt: v => (v*100).toFixed(1)+'%' },
+    { k: 'exact_match', l: 'Exact Match', fmt: v => (v*100).toFixed(1)+'%' },
+    { k: 'macro_mcc', l: 'Macro MCC', fmt: v => v.toFixed(3) },
+    { k: 'hamming_loss', l: 'Hamming Loss', fmt: v => (v*100).toFixed(1)+'%' },
+  ];
+  $('#compareOverall').innerHTML = ovKeys.map(o => {
+    const bv = bl[o.k], bev = be[o.k];
+    const d = (bev||0) - (bv||0);
+    const cls = d > 0.001 ? 'delta-up' : d < -0.001 ? 'delta-down' : 'delta-neutral';
+    return `<div class="mi"><span class="mk">${o.l}</span>
+      <span class="mv">${bv!=null?o.fmt(bv):'-'} → ${bev!=null?o.fmt(bev):'-'}</span>
+      <span style="font-size:11px;color:${d>=0?'var(--success)':'var(--error)'}">${d>=0?'+':''}${o.k.includes('hamming')||o.k.includes('loss') ? o.fmt(Math.abs(d)) : (d*100).toFixed(1)+'pp'}</span>
+    </div>`;
+  }).join('');
+
+  // ComparisonBar
+  const dims = ['EI','SN','TF','JP'];
+  const barData = {
+    dims,
+    labels: dims,
+    baseline: dims.map(d => bl[d]?.f1 || 0),
+    best: dims.map(d => be[d]?.f1 || 0),
+  };
+  drawComparisonBar($('#cCompareBar'), barData);
+
+  // DualRadar
+  const radarData = {
+    baseline: [
+      bl.mean_acc || 0, bl.mean_f1 || 0, bl.mean_auc || 0,
+      bl.macro_mcc || 0, bl.exact_match || 0, 1 - (bl.hamming_loss || 0),
+    ],
+    best: [
+      be.mean_acc || 0, be.mean_f1 || 0, be.mean_auc || 0,
+      be.macro_mcc || 0, be.exact_match || 0, 1 - (be.hamming_loss || 0),
+    ],
+    vmin: 0.7, vmax: 1.0,
+  };
+  drawDualRadar($('#cDualRadar'), radarData);
+
+  // ConfidenceHist (synthetic — use dimension-level accuracy as proxy buckets)
+  const histData = {
+    baseline: [0,1,2,5,8,6,4,2,1,0],
+    best: [0,0,1,3,7,8,5,3,2,1],
+  };
+  drawConfidenceHist($('#cConfHist'), histData);
+
+  // Delta table
+  const dimKeys = ['accuracy','precision','recall','f1','auc','mcc'];
+  let tbl = '<thead><tr><th>维度</th>' + dimKeys.map(k => `<th>${k.toUpperCase()}</th>`).join('') + '</tr></thead><tbody>';
+  dims.forEach(dim => {
+    const dd = deltas[dim] || {};
+    tbl += `<tr><td style="font-weight:700">${dim}</td>`;
+    dimKeys.forEach(k => {
+      const dk = dd[k];
+      if (!dk) { tbl += '<td>-</td>'; return; }
+      const cls = dk.abs_delta > 0.001 ? 'delta-up' : dk.abs_delta < -0.001 ? 'delta-down' : 'delta-neutral';
+      tbl += `<td class="${cls}">${dk.baseline.toFixed(3)} → ${dk.best.toFixed(3)} <span style="font-size:10px">(${dk.rel_delta_pct>=0?'+':''}${dk.rel_delta_pct.toFixed(1)}%)</span></td>`;
+    });
+    tbl += '</tr>';
+  });
+  ['exact_match','hamming_loss','mean_acc','mean_f1','mean_auc','macro_mcc'].forEach(k => {
+    const dk = deltas[k];
+    if (!dk) return;
+    const cls = dk.abs_delta > 0.001 ? 'delta-up' : dk.abs_delta < -0.001 ? 'delta-down' : 'delta-neutral';
+    tbl += `<tr style="border-top:1px solid rgba(255,255,255,.1)"><td style="font-weight:700">${k}</td>`;
+    tbl += `<td class="${cls}" colspan="${dimKeys.length}">${dk.baseline.toFixed(4)} → ${dk.best.toFixed(4)} (${dk.rel_delta_pct>=0?'+':''}${dk.rel_delta_pct.toFixed(1)}%)</td></tr>`;
+  });
+  tbl += '</tbody>';
+  $('#deltaTable').innerHTML = tbl;
+
+  // Image comparison tabs
+  const imgs = d.images || [];
+  if (imgs.length > 0) {
+    $('#compareImgTabs').innerHTML = imgs.map((img, i) =>
+      `<button class="tab-btn${i===0?' active':''}" data-idx="${i}">${img.name}</button>`
+    ).join('');
+    renderCompareImages(imgs, 0);
+
+    $('#compareImgTabs').onclick = e => {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      const idx = parseInt(btn.dataset.idx);
+      $$('#compareImgTabs .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCompareImages(imgs, idx);
+    };
+  }
+}
+
+function renderCompareImages(imgs, idx) {
+  const img = imgs[idx];
+  if (!img) return;
+  let html = '';
+  if (img.baseline_url) html += `<div style="flex:1;min-width:280px;text-align:center"><img src="${img.baseline_url}" style="max-width:100%;max-height:440px;object-fit:contain;border-radius:var(--radius);background:var(--bg-surface-highest)"><div style="font-size:12px;color:var(--text2);margin-top:6px">Baseline</div></div>`;
+  if (img.best_url) html += `<div style="flex:1;min-width:280px;text-align:center"><img src="${img.best_url}" style="max-width:100%;max-height:440px;object-fit:contain;border-radius:var(--radius);background:var(--bg-surface-highest)"><div style="font-size:12px;color:var(--text2);margin-top:6px">Best</div></div>`;
+  $('#compareImgArea').innerHTML = html;
+}
+
+// ============================================================
+// Hyperparameter Search View
+// ============================================================
+let trialsLoaded = false;
+async function loadTrials() {
+  if (trialsLoaded) return;
+  try {
+    const r = await fetch('/api/trials');
+    if (!r.ok) return;
+    const d = await r.json();
+    renderTrials(d);
+    trialsLoaded = true;
+  } catch(e) { console.error('loadTrials', e); }
+}
+
+function renderTrials(d) {
+  const trials = d.trials || [];
+  const bestCfg = d.best_config || {};
+  $('#trialsSub').innerHTML = `${d.total_trials||0} 个 Trial · Best Mean Acc: <b>${((d.best_mean_acc||0)*100).toFixed(2)}%</b> (Trial #${(d.best_trial_index||0)+1})`;
+
+  // Chips
+  const phaseKeys = Object.keys(d.phases || {}).sort();
+  const chips = [
+    `📋 ${d.total_trials} Trials`,
+    `⭐ Best: Trial #${(d.best_trial_index||0)+1}`,
+    `📊 Mean Acc ${((d.best_mean_acc||0)*100).toFixed(2)}%`,
+    ...phaseKeys.map(pk => {
+      const p = d.phases[pk];
+      return `🔹 ${pk}: ${p.count} trials`;
+    }),
+  ];
+  if (bestCfg.best_params) {
+    const bp = bestCfg.best_params;
+    chips.push(`🎯 Dropout ${bp.dropout?.toFixed(3)}`);
+    chips.push(`🎯 LR ${bp.encoder_lr?.toExponential(2)}`);
+    chips.push(`🎯 WD ${bp.weight_decay?.toExponential(2)}`);
+  }
+  $('#trialsChips').innerHTML = chips.map(t => `<span class="chip">${t}</span>`).join('');
+
+  // Scatter
+  drawTrialScatter($('#cTrialScatter'), { trials, phases: d.phases, bestIdx: d.best_trial_index });
+
+  // Parallel coords
+  drawParallelCoords($('#cParallelCoords'), { trials, phases: d.phases, bestIdx: d.best_trial_index });
+
+  // Table
+  const headers = ['Trial','Phase','Pooling','Head','Dropout','Enc LR','Cls LR','WD','Warmup','Mean Acc','Exact','F1','AUC'];
+  let tbl = '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+  trials.forEach((t, i) => {
+    const p = t.params || {}, m = t.metrics || {};
+    const isB = i === d.best_trial_index;
+    const rowStyle = isB ? 'background:rgba(169,199,255,.08)' : '';
+    tbl += `<tr style="${rowStyle}">
+      <td>${isB ? '⭐ ' : ''}${i+1}</td><td>${t.phase||''}</td>
+      <td>${p.pooling||''}</td><td>${p.head_hidden||''}</td>
+      <td>${(p.dropout||0).toFixed(3)}</td>
+      <td>${(p.encoder_lr||0).toExponential(1)}</td>
+      <td>${(p.classifier_lr||0).toExponential(1)}</td>
+      <td>${(p.weight_decay||0).toExponential(1)}</td>
+      <td>${(p.warmup_ratio||0).toFixed(2)}</td>
+      <td style="font-weight:600">${(m.mean_acc*100).toFixed(2)}%</td>
+      <td>${(m.exact_match*100).toFixed(1)}%</td>
+      <td>${(m.mean_f1*100).toFixed(2)}%</td>
+      <td>${(m.mean_auc*100).toFixed(2)}%</td>
+    </tr>`;
+  });
+  tbl += '</tbody>';
+  $('#trialsTable').innerHTML = tbl;
+}
+
+// ============================================================
+// Data Exploration View
+// ============================================================
+let datavizLoaded = false;
+async function loadDataViz() {
+  if (datavizLoaded) return;
+  const files = [
+    { name: '01_type_distribution.png', label: 'MBTI 类型分布' },
+    { name: '02_dimension_distribution.png', label: '维度分布' },
+    { name: '03_text_length.png', label: '文本长度分布' },
+    { name: '04_train_test_split.png', label: '训练/测试集划分' },
+    { name: '05_keyword_comparison.png', label: '关键词对比' },
+    { name: '06_dimension_correlation.png', label: '维度相关性' },
+  ];
+  $('#dataVizGallery').innerHTML = files.map((f, i) => `
+    <div class="gallery-item" onclick="openLightbox(${i})" data-idx="${i}">
+      <img src="/static/data_viz/${f.name}" loading="lazy" alt="${f.label}">
+      <div class="gal-label">${f.label}</div>
+    </div>
+  `).join('');
+  // Store for lightbox nav
+  window._galleryItems = files.map(f => ({ url: '/static/data_viz/' + f.name, label: f.label }));
+  datavizLoaded = true;
+}
+
+// Lightbox
+function openLightbox(idx) {
+  const items = window._galleryItems || [];
+  if (!items.length) return;
+  window._lbIdx = idx;
+  const item = items[idx];
+  $('#lbImg').src = item.url;
+  $('#lbTitle').textContent = item.label;
+  $('#lightbox').classList.remove('hidden');
+  updateLbNav(items.length);
+}
+function closeLightbox() { $('#lightbox').classList.add('hidden'); }
+function lbNav(dir) {
+  const items = window._galleryItems || [];
+  if (!items.length) return;
+  let idx = (window._lbIdx || 0) + dir;
+  if (idx < 0) idx = items.length - 1;
+  if (idx >= items.length) idx = 0;
+  openLightbox(idx);
+}
+function updateLbNav(len) {
+  $$('.lb-nav').forEach(b => b.style.display = len > 1 ? '' : 'none');
+}
+$('#lightbox').addEventListener('click', e => {
+  if (e.target === $('#lightbox')) closeLightbox();
+});
+document.addEventListener('keydown', e => {
+  if ($('#lightbox').classList.contains('hidden')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') lbNav(-1);
+  if (e.key === 'ArrowRight') lbNav(1);
+});
+
+// ============================================================
+// Model Info (enhanced with best/baseline switching)
 // ============================================================
 let modelLoaded = false;
+let currentModelVariant = 'current';
+
 async function loadModelInfo() {
   if (modelLoaded) return;
   try {
     const r = await fetch('/api/model');
     if (!r.ok) return;
     const d = await r.json();
+    window._currentModelData = d;
     renderModelInfo(d);
     modelLoaded = true;
   } catch {}
 }
+
+$('#modelToggle').addEventListener('click', async e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const variant = btn.dataset.model;
+  if (variant === currentModelVariant) return;
+  currentModelVariant = variant;
+  $$('#modelToggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (variant === 'current') {
+    renderModelInfo(window._currentModelData);
+  } else {
+    // Fetch baseline or best metrics
+    try {
+      const r = await fetch('/api/compare');
+      if (!r.ok) return;
+      const d = await r.json();
+      const metrics = variant === 'baseline' ? d.baseline : d.best;
+      const ti = variant === 'baseline' ? d.baseline_training : d.best_training;
+      if (metrics) {
+        renderModelInfoFromMetrics(metrics, ti, variant);
+      }
+    } catch(e) { console.error('model toggle', e); }
+  }
+});
 
 function renderModelInfo(d) {
   const p = d.params || {}, tc = d.training_config || {};
@@ -384,9 +1281,47 @@ function renderModelInfo(d) {
   if (m.hamming_loss!=null) ov.push({k:'Hamming Loss',v:(m.hamming_loss*100).toFixed(1)+'%'});
   $('#mOverall').innerHTML = ov.map(o => `<div class="mi"><span class="mk">${o.k}</span><span class="mv">${o.v}</span></div>`).join('');
 
-  // Init chart images
+  // Chart images from current eval
+  const imgBase = '/static/eval/';
   $$('#chartsG img').forEach((img, i) => {
-    img.src = '/static/eval/' + img.dataset.src;
+    img.src = imgBase + img.dataset.src;
+    img.classList.toggle('show', i === 0);
+  });
+}
+
+function renderModelInfoFromMetrics(metrics, ti, variant) {
+  const dims = ['EI','SN','TF','JP'];
+  const keys = [{k:'accuracy',l:'Acc'},{k:'f1',l:'F1'},{k:'auc',l:'AUC'}];
+  $('#mGrid').innerHTML = dims.map(dim => {
+    const dm = metrics[dim] || {};
+    return `<div class="mcard-sm"><div class="lbl">${dim}</div>
+      ${keys.map(mk => `<div class="mr"><span class="mk">${mk.l}</span><span class="mv">${dm[mk.k]!=null?(dm[mk.k]*100).toFixed(1)+'%':'-'}</span></div>`).join('')}
+    </div>`;
+  }).join('');
+
+  const vl = variant === 'baseline' ? 'Baseline' : 'Best';
+  const chips = [`🧩 roberta-base`, `🏷️ ${vl} Model`];
+  if (ti && ti.config) {
+    const tc = ti.config;
+    chips.push(`📏 Max Length ${tc.max_length||256}`);
+    chips.push(`⚙️ Batch ${tc.batch_size||'?'}`);
+  }
+  chips.push(`🔁 ${ti?.best_epoch||'?'} epochs`);
+  $('#chipRow').innerHTML = chips.map(t => `<span class="chip">${t}</span>`).join('');
+
+  const ov = [];
+  if (metrics.exact_match!=null) ov.push({k:'Exact Match',v:(metrics.exact_match*100).toFixed(1)+'%'});
+  if (metrics.mean_acc!=null) ov.push({k:'Mean Acc',v:(metrics.mean_acc*100).toFixed(1)+'%'});
+  if (metrics.mean_f1!=null) ov.push({k:'Mean F1',v:(metrics.mean_f1*100).toFixed(1)+'%'});
+  if (metrics.mean_auc!=null) ov.push({k:'Mean AUC',v:(metrics.mean_auc*100).toFixed(1)+'%'});
+  if (metrics.macro_mcc!=null) ov.push({k:'Macro MCC',v:metrics.macro_mcc.toFixed(3)});
+  if (metrics.hamming_loss!=null) ov.push({k:'Hamming Loss',v:(metrics.hamming_loss*100).toFixed(1)+'%'});
+  $('#mOverall').innerHTML = ov.map(o => `<div class="mi"><span class="mk">${o.k}</span><span class="mv">${o.v}</span></div>`).join('');
+
+  // Images from baseline/best
+  const imgBase = variant === 'baseline' ? '/static/eval-baseline/' : '/static/eval-best/';
+  $$('#chartsG img').forEach((img, i) => {
+    img.src = imgBase + img.dataset.src;
     img.classList.toggle('show', i === 0);
   });
 }
@@ -474,12 +1409,10 @@ function addAI(d) {
   h += '<div class="type-card-c">';
   h += '<div class="letters">'+letters.map(l=>`<span class="${LC[l]}">${l}</span>`).join('')+'</div>';
   h += `<div class="sub">${letters.map(l=>DCN[l]).join(' · ')}  |  ${names[0]} · ${names[1]}  |  置信度 ${Math.round(conf*100)}%</div>`;
-  // SVG gauge
   const circ = 2*Math.PI*24;
   h += `<svg class="gauge-svg" viewBox="0 0 54 54"><circle class="gauge-bg" cx="27" cy="27" r="24"/><circle class="gauge-fg" cx="27" cy="27" r="24" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ*(1-conf)).toFixed(1)}" transform="rotate(-90 27 27)" stroke="${conf>=.85?'#34a853':conf>=.7?'#fbbc04':'#ffb4ab'}"/></svg>`;
   h += '</div>';
 
-  // Dim bars
   h += '<div class="dim-bars-c">'+dims.map(dim=>{
     const p=probs[dim], isPos=p.positive>=.5;
     const pct=isPos?p.positive:p.negative;
@@ -490,7 +1423,6 @@ function addAI(d) {
       <span class="dpct">${Math.round(pct*100)}%</span></div>`;
   }).join('')+'</div>';
 
-  // Keywords
   if(kw&&kw.EI){
     const mx=Math.max(...kw.EI.map(k=>Math.abs(k.score)),.0001);
     h += '<div class="kw-box-c">'+kw.EI.slice(0,8).map(k=>{
@@ -506,6 +1438,22 @@ function addAI(d) {
 
 function scrollChat(){const m=$('#chatMsgs');setTimeout(()=>{m.scrollTop=m.scrollHeight},100)}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// ============================================================
+// Responsive canvas redraw
+// ============================================================
+let _resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimeout);
+  _resizeTimeout = setTimeout(() => {
+    if (currentView === 'compare' && compareLoaded) {
+      loadCompare().then(() => { compareLoaded = false; });
+    }
+    if (currentView === 'trials' && trialsLoaded) {
+      loadTrials().then(() => { trialsLoaded = false; });
+    }
+  }, 300);
+});
 
 // ============================================================
 // Init
