@@ -225,18 +225,28 @@ def load_models():
     print(f"[启动] checkpoint: {ckpt_dir}")
 
     try:
+        # 从 training_info.json 读取训练时的 pooling 配置
+        info_path = Path(ckpt_dir).parent / "training_info.json"
+        pooling_cfg = "cls"  # 默认 HP 最优值
+        if info_path.exists():
+            with open(info_path, encoding="utf-8") as f:
+                pooling_cfg = json.load(f).get("pooling", "cls")
+
         encoder = _RoBERTaEncoder(
-            model_name=model_path, pooling="mean", max_length=512,
+            model_name=model_path, pooling=pooling_cfg, max_length=512,
         )
         encoder.load_state_dict(_torch.load(
             f"{ckpt_dir}/encoder.pt", map_location=DEVICE, weights_only=True,
         ))
         encoder.to(DEVICE).eval()
 
-        classifier = _MBTIClassifier()
-        classifier.load_state_dict(_torch.load(
-            f"{ckpt_dir}/classifier.pt", map_location=DEVICE, weights_only=True,
-        ))
+        # 从 checkpoint 自动推断 head_hidden
+        ckpt_sd = _torch.load(f"{ckpt_dir}/classifier.pt", map_location="cpu", weights_only=True)
+        head_hidden = ckpt_sd["heads.EI.fc1.weight"].shape[0]
+
+        classifier = _MBTIClassifier(head_hidden=head_hidden)
+        classifier.load_state_dict(ckpt_sd if DEVICE.type == "cpu" else
+            _torch.load(f"{ckpt_dir}/classifier.pt", map_location=DEVICE, weights_only=True))
         classifier.to(DEVICE).eval()
 
         _model_cache = {"encoder": encoder, "classifier": classifier}
@@ -434,10 +444,11 @@ def api_model():
     params = _compute_checkpoint_params()
 
     result = {
-        "model_name": "roberta-base",
-        "pooling": "mean",
-        "hidden_size": 768,
-        "max_length": training_info.get("config", {}).get("max_length", 256) if training_info else 256,
+        "model_name": training_info.get("model", "roberta-base") if training_info else "roberta-base",
+        "pooling": training_info.get("pooling", "cls") if training_info else "cls",
+        "hidden_size": training_info.get("hidden_size", 768) if training_info else 768,
+        "head_hidden": training_info.get("head_hidden", 512) if training_info else 512,
+        "max_length": training_info.get("config", {}).get("max_length", 512) if training_info else 512,
         "device": str(DEVICE),
         "params": {
             "encoder": params["encoder"],
