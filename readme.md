@@ -137,13 +137,15 @@ RoBERTaEncoder
 
 ### 任务层 (`src/model/`)
 
+![模型架构图](modelframe.png)
+
 ```
 特征向量 (768-dim)
     │
-    ├── EI Head   (768 → 64 → 1 logit)
-    ├── SN Head   (768 → 64 → 1 logit)
-    ├── TF Head   (768 → 64 → 1 logit)
-    └── JP Head   (768 → 64 → 1 logit)
+    ├── EI Head   (768 → 512 → 1 logit)
+    ├── SN Head   (768 → 512 → 1 logit)
+    ├── TF Head   (768 → 512 → 1 logit)
+    └── JP Head   (768 → 512 → 1 logit)
 ```
 
 | 特性 | 说明 |
